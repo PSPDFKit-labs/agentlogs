@@ -45,7 +45,7 @@ export default defineConfig({
       project: "agentlogs",
       authToken: process.env.SENTRY_AUTH_TOKEN,
       sourcemaps: {
-        filesToDeleteAfterUpload: ["**/*.map"],
+        filesToDeleteAfterUpload: ["./dist/client/**/*.map"],
       },
     }),
   ],
