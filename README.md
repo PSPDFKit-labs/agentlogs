@@ -121,7 +121,7 @@ AgentLogs is fully open-source and can be self-hosted.
 
 ### Prerequisites
 
-- [Bun](https://bun.sh/) v1.3.0+
+- [Bun](https://bun.sh/) v1.3.10
 - GitHub OAuth App ([create one](https://github.com/settings/developers))
   - Homepage: `http://localhost:8787`
   - Callback: `http://localhost:8787/api/auth/callback/github`
