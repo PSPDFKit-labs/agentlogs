@@ -155,11 +155,11 @@ function AppLayout() {
                     <DropdownMenuSeparator />
                   </>
                 )}
-                <DropdownMenuItem onClick={() => window.open("https://agentlogs.ai/docs", "_blank")}>
+                <DropdownMenuItem onClick={() => window.open("/docs", "_blank")}>
                   <BookOpenIcon className="size-4" />
                   Docs
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => window.open("https://agentlogs.ai/docs/changelog", "_blank")}>
+                <DropdownMenuItem onClick={() => window.open("/docs/changelog", "_blank")}>
                   <ScrollTextIcon className="size-4" />
                   Changelog
                 </DropdownMenuItem>

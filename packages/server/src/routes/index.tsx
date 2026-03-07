@@ -39,7 +39,7 @@ const features = [
 const faqs = [
   {
     q: "Is AgentLogs source-available?",
-    a: "Yes. The entire codebase (CLI, web app, plugins) is on GitHub under FSL-1.1-Apache-2.0. You can self-host it with the official Docker image (`ghcr.io/agentlogs/agentlogs`) or standalone binaries, or use our hosted version at agentlogs.ai.",
+    a: "Yes. The entire codebase (CLI, web app, plugins) is on GitHub under FSL-1.1-Apache-2.0. You can self-host it with the official Docker image (`ghcr.io/agentlogs/agentlogs`) or standalone binaries, or use our hosted version.",
   },
   {
     q: "How does AgentLogs capture my sessions?",
@@ -74,7 +74,7 @@ function LandingPage() {
             AgentLogs
           </a>
           <div className="flex items-center gap-5 text-sm">
-            <a href="https://agentlogs.ai/docs" className="text-muted-foreground hover:text-foreground">
+            <a href="/docs" className="text-muted-foreground hover:text-foreground">
               Docs
             </a>
             <a
@@ -280,10 +280,10 @@ function LandingPage() {
       <footer className="border-t border-border py-10">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-5 px-6 text-sm text-muted-foreground">
           <div className="flex gap-6">
-            <a href="https://agentlogs.ai/docs" className="hover:text-foreground">
+            <a href="/docs" className="hover:text-foreground">
               Docs
             </a>
-            <a href="https://agentlogs.ai/docs/changelog" className="hover:text-foreground">
+            <a href="/docs/changelog" className="hover:text-foreground">
               Changelog
             </a>
             <a

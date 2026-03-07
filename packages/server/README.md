@@ -23,14 +23,15 @@ AgentLogs server is a unified TanStack Start application (web UI + API) that run
 
 ### Optional
 
-| Variable             | Default           | Description                   |
-| -------------------- | ----------------- | ----------------------------- |
-| `DB_LOCAL_PATH`      | `.data/db.sqlite` | SQLite file location          |
-| `STORAGE_DIR`        | `.data/storage`   | Blob storage directory        |
-| `OPENROUTER_API_KEY` | unset             | Enables AI summary generation |
-| `RESEND_API_KEY`     | unset             | Enables transactional emails  |
-| `PORT`               | `3000`            | HTTP server port              |
-| `HOST`               | `0.0.0.0`         | HTTP bind address             |
+| Variable             | Default                                         | Description                              |
+| -------------------- | ----------------------------------------------- | ---------------------------------------- |
+| `DB_LOCAL_PATH`      | `.data/db.sqlite`                               | SQLite file location                     |
+| `STORAGE_DIR`        | `.data/storage`                                 | Blob storage directory                   |
+| `OPENROUTER_API_KEY` | unset                                           | Enables AI summary generation            |
+| `RESEND_API_KEY`     | unset                                           | Enables transactional emails             |
+| `EMAIL_SENDER`       | `Philipp from AgentLogs <philipp@agentlogs.ai>` | Overrides the transactional email sender |
+| `PORT`               | `3000`                                          | HTTP server port                         |
+| `HOST`               | `0.0.0.0`                                       | HTTP bind address                        |
 
 ## Local Development
 

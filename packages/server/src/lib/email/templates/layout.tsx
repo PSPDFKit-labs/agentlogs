@@ -2,11 +2,12 @@ import { Body, Container, Head, Html, Img, Preview, Section, Text } from "@react
 import type { ReactNode } from "react";
 
 interface EmailLayoutProps {
+  logoUrl: string;
   preview: string;
   children: ReactNode;
 }
 
-export function EmailLayout({ preview, children }: EmailLayoutProps) {
+export function EmailLayout({ logoUrl, preview, children }: EmailLayoutProps) {
   return (
     <Html>
       <Head />
@@ -15,7 +16,7 @@ export function EmailLayout({ preview, children }: EmailLayoutProps) {
         <Container style={container}>
           {/* Header with logo and title */}
           <Section style={header}>
-            <Img src="https://agentlogs.ai/email-logo.png" width="24" height="24" alt="AgentLogs" style={logo} />
+            <Img src={logoUrl} width="24" height="24" alt="AgentLogs" style={logo} />
             <span style={title}>AgentLogs</span>
           </Section>
 

@@ -496,7 +496,7 @@ function TranscriptDetailComponent() {
       <aside className="sticky top-0 hidden max-h-screen w-1/4 shrink-0 self-start lg:flex lg:items-start">
         <div className="max-h-screen space-y-6 overflow-y-auto p-2">
           {/* Share URL */}
-          <ShareUrlInput transcriptId={data.id} permalinkedIndex={permalinkedIndex} />
+          <ShareUrlInput baseUrl={data.baseUrl} transcriptId={data.id} permalinkedIndex={permalinkedIndex} />
           {/* User Prompts Navigation */}
           {userMessages.length > 0 && (
             <PromptsList
@@ -606,13 +606,22 @@ function PromptsList({
   );
 }
 
-function ShareUrlInput({ transcriptId, permalinkedIndex }: { transcriptId: string; permalinkedIndex: number | null }) {
+function ShareUrlInput({
+  baseUrl,
+  transcriptId,
+  permalinkedIndex,
+}: {
+  baseUrl: string;
+  transcriptId: string;
+  permalinkedIndex: number | null;
+}) {
   const [copied, setCopied] = useState(false);
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
 
   const shareUrl =
     permalinkedIndex !== null
-      ? `https://agentlogs.ai/s/${transcriptId}#msg-${permalinkedIndex + 1}`
-      : `https://agentlogs.ai/s/${transcriptId}`;
+      ? `${normalizedBaseUrl}/s/${transcriptId}#msg-${permalinkedIndex + 1}`
+      : `${normalizedBaseUrl}/s/${transcriptId}`;
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareUrl);

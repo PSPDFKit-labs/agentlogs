@@ -2,12 +2,14 @@ import { Button, Section, Text } from "@react-email/components";
 import { EmailLayout } from "./layout";
 
 interface WelcomePreviewEmailProps {
+  docsUrl: string;
   name: string;
+  logoUrl: string;
 }
 
-export function WelcomePreviewEmail({ name }: WelcomePreviewEmailProps) {
+export function WelcomePreviewEmail({ docsUrl, name, logoUrl }: WelcomePreviewEmailProps) {
   return (
-    <EmailLayout preview={`Welcome to AgentLogs, ${name}!`}>
+    <EmailLayout logoUrl={logoUrl} preview={`Welcome to AgentLogs, ${name}!`}>
       <Text style={greeting}>Hi {name},</Text>
 
       <Text style={text}>
@@ -16,7 +18,7 @@ export function WelcomePreviewEmail({ name }: WelcomePreviewEmailProps) {
       </Text>
 
       <Section style={buttonContainer}>
-        <Button style={button} href="https://agentlogs.ai/docs">
+        <Button style={button} href={docsUrl}>
           Get started
         </Button>
       </Section>

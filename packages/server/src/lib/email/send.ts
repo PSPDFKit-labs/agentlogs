@@ -1,9 +1,15 @@
 import { getResendClient } from "./client";
 import { TeamAddedEmail } from "./templates/team-added";
 import { WelcomePreviewEmail } from "./templates/welcome-preview";
+import { env } from "../env";
 import { logger } from "../logger";
 
-const FROM_EMAIL = "Philipp from AgentLogs <philipp@agentlogs.ai>";
+const DEFAULT_FROM_EMAIL = "Philipp from AgentLogs <philipp@agentlogs.ai>";
+const FROM_EMAIL = env.EMAIL_SENDER.trim() || DEFAULT_FROM_EMAIL;
+
+function getPublicUrl(path: string): string {
+  return new URL(path, env.WEB_URL).toString();
+}
 
 export async function sendWelcomePreviewEmail(to: string, name: string): Promise<{ success: boolean; error?: string }> {
   const resend = getResendClient();
@@ -13,7 +19,11 @@ export async function sendWelcomePreviewEmail(to: string, name: string): Promise
       from: FROM_EMAIL,
       to,
       subject: "Welcome to the AgentLogs Preview",
-      react: WelcomePreviewEmail({ name }),
+      react: WelcomePreviewEmail({
+        name,
+        docsUrl: getPublicUrl("/docs"),
+        logoUrl: getPublicUrl("/email-logo.png"),
+      }),
     });
 
     if (error) {
@@ -43,7 +53,13 @@ export async function sendTeamAddedEmail(
       from: FROM_EMAIL,
       to,
       subject: `You've been added to ${teamName}`,
-      react: TeamAddedEmail({ name, teamName, addedByName }),
+      react: TeamAddedEmail({
+        name,
+        teamName,
+        addedByName,
+        appUrl: getPublicUrl("/app"),
+        logoUrl: getPublicUrl("/email-logo.png"),
+      }),
     });
 
     if (error) {

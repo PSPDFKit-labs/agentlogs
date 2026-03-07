@@ -2,14 +2,16 @@ import { Button, Section, Text } from "@react-email/components";
 import { EmailLayout } from "./layout";
 
 interface TeamAddedEmailProps {
+  appUrl: string;
   name: string;
   teamName: string;
   addedByName: string;
+  logoUrl: string;
 }
 
-export function TeamAddedEmail({ name, teamName, addedByName }: TeamAddedEmailProps) {
+export function TeamAddedEmail({ appUrl, name, teamName, addedByName, logoUrl }: TeamAddedEmailProps) {
   return (
-    <EmailLayout preview={`You've been added to ${teamName}`}>
+    <EmailLayout logoUrl={logoUrl} preview={`You've been added to ${teamName}`}>
       <Text style={greeting}>Hi {name},</Text>
 
       <Text style={text}>
@@ -18,7 +20,7 @@ export function TeamAddedEmail({ name, teamName, addedByName }: TeamAddedEmailPr
       </Text>
 
       <Section style={buttonContainer}>
-        <Button style={button} href="https://agentlogs.ai/app">
+        <Button style={button} href={appUrl}>
           View team
         </Button>
       </Section>

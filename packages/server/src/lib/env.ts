@@ -95,6 +95,7 @@ export const env = {
   DB: process.env.DB_LOCAL_PATH || ".data/db.sqlite",
   BUCKET: new LocalBucket(storageRoot),
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET || "local-dev-secret",
+  EMAIL_SENDER: process.env.EMAIL_SENDER || "",
   GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID || "",
   GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || "",
   OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || "",
