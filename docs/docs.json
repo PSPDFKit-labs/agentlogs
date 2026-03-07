@@ -24,10 +24,13 @@
         "pages": [
           "introduction/overview",
           "introduction/getting-started",
-          "introduction/self-hosting",
           "introduction/permissions",
           "introduction/secret-redaction"
         ]
+      },
+      {
+        "group": "Server",
+        "pages": ["server/hosting"]
       },
       {
         "group": "Agents",

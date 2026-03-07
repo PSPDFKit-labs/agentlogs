@@ -115,7 +115,7 @@ npx agentlogs status
 
 See the full [CLI reference](https://agentlogs.ai/docs/cli/commands).
 
-## Self-Hosting
+## Hosting
 
 AgentLogs is source-available and can be self-hosted.
 
@@ -124,7 +124,7 @@ You can deploy it either as:
 - A container from `ghcr.io/agentlogs/agentlogs`
 - A standalone `agentlogs-server` binary from GitHub Releases
 
-See the full guide at [Self-Hosting Docs](https://agentlogs.ai/docs/introduction/self-hosting).
+See the full guide at [Hosting Docs](https://agentlogs.ai/docs/server/hosting).
 
 ### Prerequisites
 
