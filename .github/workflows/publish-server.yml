@@ -157,7 +157,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.meta.outputs.tag }}
-          name: AgentLogs server v${{ needs.meta.outputs.version }}
+          name: server v${{ needs.meta.outputs.version }}
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |
