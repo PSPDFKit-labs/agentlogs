@@ -6,7 +6,46 @@ import { env } from "@/lib/env";
 import { createDrizzle } from "../db";
 import { logger } from "./logger";
 
-let authInstanceCache: ReturnType<typeof betterAuth> | null = null;
+function buildAuth() {
+  const db = createDrizzle(env.DB);
+
+  return betterAuth({
+    database: drizzleAdapter(db, {
+      provider: "sqlite",
+    }),
+    user: {
+      additionalFields: {
+        username: {
+          type: "string",
+          required: false,
+        },
+      },
+    },
+    socialProviders: {
+      github: {
+        clientId: env.GITHUB_CLIENT_ID,
+        clientSecret: env.GITHUB_CLIENT_SECRET,
+        mapProfileToUser: (profile) => ({
+          username: profile.login.toLowerCase(),
+        }),
+      },
+    },
+    secret: env.BETTER_AUTH_SECRET,
+    baseURL: env.WEB_URL,
+    trustedOrigins: [env.WEB_URL],
+    plugins: [
+      bearer(),
+      deviceAuthorization({
+        verificationUri: "/app/device",
+      }),
+      tanstackStartCookies(),
+    ],
+  });
+}
+
+export type Auth = ReturnType<typeof buildAuth>;
+
+let authInstanceCache: Auth | null = null;
 
 function assertAuthConfigured(): void {
   const missing: string[] = [];
@@ -49,40 +88,7 @@ export function createAuth() {
       cached: Boolean(authInstanceCache),
     });
 
-    const db = createDrizzle(env.DB);
-
-    authInstanceCache = betterAuth({
-      database: drizzleAdapter(db, {
-        provider: "sqlite",
-      }),
-      user: {
-        additionalFields: {
-          username: {
-            type: "string",
-            required: false,
-          },
-        },
-      },
-      socialProviders: {
-        github: {
-          clientId: env.GITHUB_CLIENT_ID,
-          clientSecret: env.GITHUB_CLIENT_SECRET,
-          mapProfileToUser: (profile) => ({
-            username: profile.login.toLowerCase(),
-          }),
-        },
-      },
-      secret: env.BETTER_AUTH_SECRET,
-      baseURL: env.WEB_URL,
-      trustedOrigins: [env.WEB_URL],
-      plugins: [
-        bearer(),
-        deviceAuthorization({
-          verificationUri: "/app/device",
-        }),
-        tanstackStartCookies(),
-      ],
-    });
+    authInstanceCache = buildAuth();
     return authInstanceCache;
   } catch (error) {
     logger.error("Failed to create auth instance", {
@@ -92,5 +98,3 @@ export function createAuth() {
     throw error;
   }
 }
-
-export type Auth = ReturnType<typeof createAuth>;
