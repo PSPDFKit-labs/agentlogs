@@ -30,11 +30,11 @@
   },
   "devDependencies": {
     "@types/bun": "^1.3.10",
-    "@typescript/native-preview": "7.0.0-dev.20260115.1",
+    "@typescript/native-preview": "7.0.0-dev.20260310.1",
     "concurrently": "^9.2.1",
     "husky": "^9.1.7",
-    "oxfmt": "^0.24.0",
-    "oxlint": "^1.50.0",
+    "oxfmt": "^0.37.0",
+    "oxlint": "^1.52.0",
     "yaml": "^2.8.2"
   },
   "packageManager": "bun@1.3.10"
