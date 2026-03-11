@@ -165,7 +165,6 @@ bun db:reset
 - `POST /api/ingest` - Ingest transcript data
 - `GET|POST /api/auth/*` - BetterAuth endpoints
 - `GET /api/transcripts` - List transcripts
-- `GET /api/transcripts/:id` - Fetch transcript metadata
 
 ### Server functions
 
