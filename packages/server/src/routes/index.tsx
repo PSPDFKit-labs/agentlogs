@@ -121,7 +121,7 @@ function LandingPage() {
                     <CodexIcon className="size-5 text-white sm:size-7" />
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>Codex CLI (experimental)</TooltipContent>
+                <TooltipContent>Codex CLI</TooltipContent>
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>

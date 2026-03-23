@@ -1,6 +1,7 @@
 import { installCodexHookIntegration } from "../../lib/codex-config";
 
-const DEFAULT_HOOK_COMMAND = "npx -y agentlogs codex hook";
+const DEFAULT_HOOK_COMMAND =
+  "bash -c 'if [ -n \"$AGENTLOGS_CLI_PATH\" ]; then exec $AGENTLOGS_CLI_PATH codex hook; else exec npx -y agentlogs@latest codex hook; fi'";
 
 export async function codexInstallCommand(): Promise<void> {
   const result = installCodexHookIntegration(DEFAULT_HOOK_COMMAND);
@@ -13,10 +14,11 @@ export async function codexInstallCommand(): Promise<void> {
     console.log("No changes were needed.");
   } else {
     if (result.configUpdated) {
-      console.log("Enabled experimental Codex hooks via [features].codex_hooks = true.");
+      console.log("Enabled Codex hooks via [features].codex_hooks = true.");
     }
     if (result.hooksUpdated) {
       console.log("Wrote AgentLogs SessionStart and Stop hook entries.");
+      console.log("Hooks prefer AGENTLOGS_CLI_PATH when set and otherwise fall back to agentlogs@latest.");
     }
   }
 }

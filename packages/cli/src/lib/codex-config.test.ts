@@ -1,6 +1,9 @@
 import { describe, expect, it } from "bun:test";
 import { updateCodexConfigContents, updateHooksFileContents } from "./codex-config";
 
+const HOOK_COMMAND =
+  "bash -c 'if [ -n \"$AGENTLOGS_CLI_PATH\" ]; then exec $AGENTLOGS_CLI_PATH codex hook; else exec npx -y agentlogs@latest codex hook; fi'";
+
 describe("updateCodexConfigContents", () => {
   it("enables codex_hooks in an existing features section", () => {
     const input = `model = "gpt-5.4"
@@ -46,13 +49,13 @@ describe("updateHooksFileContents", () => {
       2,
     );
 
-    const output = updateHooksFileContents(input, "npx -y agentlogs codex hook");
+    const output = updateHooksFileContents(input, HOOK_COMMAND);
     const parsed = JSON.parse(output) as {
       hooks: Record<string, Array<{ hooks: Array<{ command: string; statusMessage?: string }> }>>;
     };
 
     expect(parsed.hooks.SessionStart).toHaveLength(1);
-    expect(parsed.hooks.SessionStart[0].hooks[0].command).toBe("npx -y agentlogs codex hook");
+    expect(parsed.hooks.SessionStart[0].hooks[0].command).toBe(HOOK_COMMAND);
     expect(parsed.hooks.SessionStart[0].hooks[0].statusMessage).toBeUndefined();
     expect(parsed.hooks.Stop).toHaveLength(2);
     expect(parsed.hooks.Stop.some((group) => group.hooks[0].command === "echo keep-me")).toBe(true);
@@ -67,7 +70,7 @@ describe("updateHooksFileContents", () => {
               hooks: [
                 {
                   type: "command",
-                  command: "npx -y agentlogs codex hook",
+                  command: HOOK_COMMAND,
                 },
               ],
             },
@@ -78,13 +81,11 @@ describe("updateHooksFileContents", () => {
       2,
     );
 
-    const output = updateHooksFileContents(input, "npx -y agentlogs codex hook");
+    const output = updateHooksFileContents(input, HOOK_COMMAND);
     const parsed = JSON.parse(output) as {
       hooks: Record<string, Array<{ hooks: Array<{ command: string }> }>>;
     };
 
-    expect(parsed.hooks.Stop.filter((group) => group.hooks[0].command === "npx -y agentlogs codex hook")).toHaveLength(
-      1,
-    );
+    expect(parsed.hooks.Stop.filter((group) => group.hooks[0].command === HOOK_COMMAND)).toHaveLength(1);
   });
 });

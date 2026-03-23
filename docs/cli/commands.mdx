@@ -161,7 +161,7 @@ Reads hook data from stdin. This command is meant to be called from Claude Code'
 
 ---
 
-## Codex (Experimental)
+## Codex
 
 ### codex upload
 
@@ -186,7 +186,7 @@ npx agentlogs codex upload ~/.codex/sessions/2025/01/25/session-abc123.jsonl
 Hook entry point for Codex integration. Called automatically by Codex hooks.
 
 ```bash
-npx agentlogs codex hook
+npx agentlogs@latest codex hook
 ```
 
 Reads hook data from stdin. This command is meant to be called from Codex's hook system, not manually.
@@ -203,7 +203,8 @@ This command:
 
 - Enables `codex_hooks` in `~/.codex/config.toml`
 - Writes AgentLogs hook entries to `~/.codex/hooks.json`
-- This is required because Codex hooks are currently behind the experimental `codex_hooks` feature flag
+- Prefers `AGENTLOGS_CLI_PATH` when set, otherwise runs `npx -y agentlogs@latest codex hook`
+- Captures transcripts only; git commit tracking hooks are not installed by default
 
 ---
 

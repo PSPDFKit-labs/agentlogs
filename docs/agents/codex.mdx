@@ -1,10 +1,8 @@
 ---
-title: Codex (experimental)
+title: Codex
 description: Set up AgentLogs with OpenAI Codex for automatic transcript capture
 icon: /icons/codex.svg
 ---
-
-<Warning>Codex support is **experimental**. The integration works but may have rough edges.</Warning>
 
 # Codex Integration
 
@@ -14,7 +12,7 @@ Codex is OpenAI's CLI for coding with GPT models. AgentLogs provides automatic t
 
 - **Automatic capture** - Transcripts are uploaded after each agent response
 - **Native hooks** - Uses Codex's built-in hook system instead of a background watcher
-- **Experimental hook support** - Automatically enables Codex's `codex_hooks` feature flag during install
+- **Transcript-only sync** - Captures transcripts without enabling git commit tracking by default
 
 ## Installation
 
@@ -39,12 +37,12 @@ This does two things:
 - Adds `codex_hooks = true` under `[features]` in `~/.codex/config.toml`
 - Writes AgentLogs `SessionStart` and `Stop` entries to `~/.codex/hooks.json`
 
-`codex_hooks` is currently an experimental Codex feature flag. Without it, Codex will ignore `hooks.json`.
+Codex reads `hooks.json` when `codex_hooks` is enabled in `~/.codex/config.toml`.
 
 ### 3. Manual Configuration
 
 <Accordion title="Manual configuration">
-If you prefer to configure Codex yourself, first enable the experimental feature in `~/.codex/config.toml`:
+If you prefer to configure Codex yourself, first enable hook support in `~/.codex/config.toml`:
 
 ```toml
 [features]
@@ -61,7 +59,7 @@ Then create `~/.codex/hooks.json` with the following contents:
         "hooks": [
           {
             "type": "command",
-            "command": "npx -y agentlogs codex hook",
+            "command": "bash -c 'if [ -n \"$AGENTLOGS_CLI_PATH\" ]; then exec $AGENTLOGS_CLI_PATH codex hook; else exec npx -y agentlogs@latest codex hook; fi'",
             "timeoutSec": 30
           }
         ]
@@ -72,7 +70,7 @@ Then create `~/.codex/hooks.json` with the following contents:
         "hooks": [
           {
             "type": "command",
-            "command": "npx -y agentlogs codex hook",
+            "command": "bash -c 'if [ -n \"$AGENTLOGS_CLI_PATH\" ]; then exec $AGENTLOGS_CLI_PATH codex hook; else exec npx -y agentlogs@latest codex hook; fi'",
             "timeoutSec": 30
           }
         ]
@@ -81,6 +79,8 @@ Then create `~/.codex/hooks.json` with the following contents:
   }
 }
 ```
+
+If you're testing a local AgentLogs checkout, export `AGENTLOGS_CLI_PATH='bun /absolute/path/to/packages/cli/src/index.ts'` before starting Codex to force hooks to use your local CLI instead of npm.
 
 You can also place the same `hooks.json` file in a project-local `.codex/` directory if you want the integration enabled only for one repository.
 

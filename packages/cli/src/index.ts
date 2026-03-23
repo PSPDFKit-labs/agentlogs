@@ -104,7 +104,7 @@ codex
 
 codex
   .command("install")
-  .description("Install AgentLogs Codex hooks into ~/.codex and enable the codex_hooks feature")
+  .description("Install AgentLogs Codex hooks into ~/.codex")
   .action(async () => {
     await codexInstallCommand();
   });
