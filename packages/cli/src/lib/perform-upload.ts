@@ -4,6 +4,7 @@ import { dirname, isAbsolute, resolve } from "path";
 import type { TranscriptSource, TranscriptVisibility, UploadBlob, UploadPayload } from "@agentlogs/shared";
 import { convertClaudeCodeTranscript, resolveGitContext, type UnifiedTranscript } from "@agentlogs/shared/claudecode";
 import { convertCodexTranscript } from "@agentlogs/shared/codex";
+import { rewriteMarkdownLocalFileLinksDeep } from "@agentlogs/shared/file-links";
 import { redactSecretsDeep } from "@agentlogs/shared/redact";
 import { redactSensitiveFilesInTranscript } from "@agentlogs/shared/redact-sensitive-files";
 import { LiteLLMPricingFetcher } from "@agentlogs/shared/pricing";
@@ -36,6 +37,15 @@ export interface PerformUploadResult {
   source: TranscriptSource;
   /** True if upload was skipped due to allowlist */
   skipped: boolean;
+}
+
+export function prepareUnifiedTranscriptForUpload(transcript: UnifiedTranscript): UnifiedTranscript {
+  const linkRewrittenTranscript = rewriteMarkdownLocalFileLinksDeep(transcript, {
+    repoId: transcript.git?.repo ?? null,
+    branch: transcript.git?.branch ?? null,
+  });
+  const fileRedactedTranscript = redactSensitiveFilesInTranscript(linkRewrittenTranscript);
+  return redactSecretsDeep(fileRedactedTranscript);
 }
 
 /**
@@ -99,14 +109,10 @@ export async function performUpload(
   // Now do expensive conversion (pass pre-parsed data)
   const converted = await convertTranscriptFile(params, parsed);
 
-  // Redact sensitive file contents (e.g., .env, .zshrc) before pattern-based secret redaction
-  const fileRedactedTranscript = redactSensitiveFilesInTranscript(converted.unifiedTranscript);
+  const preparedTranscript = prepareUnifiedTranscriptForUpload(converted.unifiedTranscript);
 
-  // Redact secrets from transcript messages using pattern matching
-  const redactedTranscript = redactSecretsDeep(fileRedactedTranscript);
-
-  // Compute sha256 from redacted unified transcript
-  const unifiedJson = JSON.stringify(redactedTranscript);
+  // Compute sha256 from prepared unified transcript
+  const unifiedJson = JSON.stringify(preparedTranscript);
   const sha256 = createHash("sha256").update(unifiedJson).digest("hex");
 
   // Generate stable client ID for this transcript
@@ -118,7 +124,7 @@ export async function performUpload(
   const payload: UploadPayload = {
     id: clientId,
     sha256,
-    unifiedTranscript: redactedTranscript,
+    unifiedTranscript: preparedTranscript,
     blobs: converted.blobs.length > 0 ? converted.blobs : undefined,
     visibility,
   };
@@ -135,7 +141,7 @@ export async function performUpload(
     eventCount: converted.eventCount,
     invalidLines: converted.invalidLines,
     sessionId: converted.sessionId,
-    unifiedTranscript: redactedTranscript,
+    unifiedTranscript: preparedTranscript,
     sha256,
     source: params.source ?? "claude-code",
     cwd: converted.cwd,
@@ -446,14 +452,10 @@ export async function uploadUnifiedToAllEnvs(params: UploadUnifiedParams): Promi
     throw new Error("No authenticated environments found. Run `agentlogs login agentlogs.ai` first.");
   }
 
-  // Redact sensitive file contents (e.g., .env, .zshrc) before pattern-based secret redaction
-  const fileRedactedTranscript = redactSensitiveFilesInTranscript(unifiedTranscript);
+  const preparedTranscript = prepareUnifiedTranscriptForUpload(unifiedTranscript);
 
-  // Redact secrets from transcript using pattern matching
-  const redactedTranscript = redactSecretsDeep(fileRedactedTranscript);
-
-  // Compute sha256 from redacted unified transcript
-  const unifiedJson = JSON.stringify(redactedTranscript);
+  // Compute sha256 from prepared unified transcript
+  const unifiedJson = JSON.stringify(preparedTranscript);
   const sha256 = createHash("sha256").update(unifiedJson).digest("hex");
 
   // Generate stable client ID for this transcript
@@ -465,7 +467,7 @@ export async function uploadUnifiedToAllEnvs(params: UploadUnifiedParams): Promi
   const payload: UploadPayload = {
     id: clientId,
     sha256,
-    unifiedTranscript: redactedTranscript,
+    unifiedTranscript: preparedTranscript,
     blobs: blobs && blobs.length > 0 ? blobs : undefined,
     visibility,
   };

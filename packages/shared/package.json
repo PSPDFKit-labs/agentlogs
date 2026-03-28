@@ -19,7 +19,8 @@
     "./pricing": "./src/pricing.ts",
     "./redact": "./src/redact.ts",
     "./redact-sensitive-files": "./src/redact-sensitive-files.ts",
-    "./models": "./src/models.ts"
+    "./models": "./src/models.ts",
+    "./file-links": "./src/file-links.ts"
   },
   "scripts": {
     "check": "tsgo --project tsconfig.json"

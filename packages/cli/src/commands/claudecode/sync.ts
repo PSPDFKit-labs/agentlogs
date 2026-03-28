@@ -5,9 +5,8 @@ import { basename, extname, join, relative, resolve } from "path";
 import { fetchTranscriptMetadata, getRepoMetadata } from "@agentlogs/shared";
 import { convertClaudeCodeTranscript, resolveGitContext } from "@agentlogs/shared/claudecode";
 import { LiteLLMPricingFetcher } from "@agentlogs/shared/pricing";
-import { redactSecretsDeep } from "@agentlogs/shared/redact";
 import { getAuthenticatedEnvironments, type Environment } from "../../config";
-import { performUpload } from "../../lib/perform-upload";
+import { performUpload, prepareUnifiedTranscriptForUpload } from "../../lib/perform-upload";
 
 interface LocalTranscriptInfo {
   transcriptId: string;
@@ -213,9 +212,9 @@ async function discoverLocalTranscripts(projectsRoot: string): Promise<LocalTran
           continue;
         }
 
-        // Compute sha256 from unified transcript (not raw) so conversion changes are detected
-        const unifiedTranscript = redactSecretsDeep(conversionResult.transcript);
-        const unifiedJson = JSON.stringify(unifiedTranscript);
+        // Compute sha256 from the prepared upload transcript so local/remote comparisons stay aligned
+        const preparedTranscript = prepareUnifiedTranscriptForUpload(conversionResult.transcript);
+        const unifiedJson = JSON.stringify(preparedTranscript);
         const sha256 = createHash("sha256").update(unifiedJson).digest("hex");
 
         collected.push({
