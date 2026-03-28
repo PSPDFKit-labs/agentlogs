@@ -171,9 +171,11 @@ describe("processCodexHookInput", () => {
       cwd: "/repo",
     };
 
-    const response = await processCodexHookInput(hookInput, async (params) => {
-      calls.push(params as unknown as Record<string, unknown>);
-      return makeUploadResult();
+    const response = await processCodexHookInput(hookInput, {
+      uploadFn: async (params) => {
+        calls.push(params as unknown as Record<string, unknown>);
+        return makeUploadResult();
+      },
     });
 
     expect(response).toEqual({});
@@ -197,9 +199,11 @@ describe("processCodexHookInput", () => {
         transcript_path: "/tmp/codex-session.jsonl",
         cwd: "/repo",
       },
-      async () => {
-        uploadCalled = true;
-        return makeUploadResult();
+      {
+        uploadFn: async () => {
+          uploadCalled = true;
+          return makeUploadResult();
+        },
       },
     );
 
@@ -216,13 +220,123 @@ describe("processCodexHookInput", () => {
         session_id: "session-123",
         transcript_path: null,
       },
-      async () => {
-        uploadCalled = true;
-        return makeUploadResult();
+      {
+        uploadFn: async () => {
+          uploadCalled = true;
+          return makeUploadResult();
+        },
       },
     );
 
     expect(response).toEqual({});
     expect(uploadCalled).toBe(false);
+  });
+
+  it("uploads Codex transcripts before git commits on PreToolUse", async () => {
+    const calls: Array<Record<string, unknown>> = [];
+
+    const response = await processCodexHookInput(
+      {
+        hook_event_name: "PreToolUse",
+        session_id: "session-123",
+        transcript_path: "/tmp/codex-session.jsonl",
+        cwd: "/repo",
+        tool_name: "Bash",
+        tool_input: {
+          command: 'git commit -m "Test commit"',
+        },
+      },
+      {
+        uploadFn: async (params) => {
+          calls.push(params as unknown as Record<string, unknown>);
+          return makeUploadResult();
+        },
+      },
+    );
+
+    expect(response).toEqual({});
+    expect(calls).toEqual([
+      {
+        transcriptPath: "/tmp/codex-session.jsonl",
+        sessionId: "session-123",
+        cwdOverride: "/repo",
+        source: "codex",
+      },
+    ]);
+  });
+
+  it("tracks git commits on PostToolUse using the session transcript id", async () => {
+    const trackCalls: Array<Record<string, unknown>> = [];
+    const transcriptIdCalls: string[] = [];
+
+    const response = await processCodexHookInput(
+      {
+        hook_event_name: "PostToolUse",
+        session_id: "session-123",
+        cwd: "/repo",
+        tool_name: "Bash",
+        tool_input: {
+          command: 'git commit -m "Test commit"',
+        },
+        tool_response: JSON.stringify({
+          output: "[main abc1234] Test commit\n 1 file changed, 1 insertion(+)\n",
+          metadata: {
+            exit_code: 0,
+          },
+        }),
+      },
+      {
+        getTranscriptIdFn: async (sessionId) => {
+          transcriptIdCalls.push(sessionId);
+          return "transcript-123";
+        },
+        trackCommitFn: async (payload) => {
+          trackCalls.push(payload as unknown as Record<string, unknown>);
+        },
+      },
+    );
+
+    expect(response).toEqual({});
+    expect(transcriptIdCalls).toEqual(["session-123"]);
+    expect(trackCalls).toHaveLength(1);
+    expect(trackCalls[0]).toMatchObject({
+      transcriptId: "transcript-123",
+      repoPath: "/repo",
+      commitSha: "abc1234",
+      commitTitle: "Test commit",
+      branch: "main",
+    });
+    expect(typeof trackCalls[0].timestamp).toBe("string");
+  });
+
+  it("does not track failed git commits on PostToolUse", async () => {
+    let trackCalled = false;
+
+    const response = await processCodexHookInput(
+      {
+        hook_event_name: "PostToolUse",
+        session_id: "session-123",
+        cwd: "/repo",
+        tool_name: "Bash",
+        tool_input: {
+          command: 'git commit -m "Test commit"',
+        },
+        tool_response: JSON.stringify({
+          output: "nothing to commit, working tree clean\n",
+          metadata: {
+            exit_code: 1,
+          },
+        }),
+      },
+      {
+        getTranscriptIdFn: async () => "transcript-123",
+        trackCommitFn: async () => {
+          trackCalled = true;
+        },
+      },
+    );
+
+    expect(response).toEqual({});
+    expect(trackCalled).toBe(false);
   });
 });

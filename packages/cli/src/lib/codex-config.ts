@@ -73,6 +73,8 @@ export function updateHooksFileContents(contents: string, hookCommand: string): 
 
   const hooks = parsed.hooks ?? {};
   hooks.SessionStart = upsertAgentlogsGroup(hooks.SessionStart ?? [], createAgentlogsGroup(hookCommand));
+  hooks.PreToolUse = upsertAgentlogsGroup(hooks.PreToolUse ?? [], createAgentlogsGroup(hookCommand, "Bash"));
+  hooks.PostToolUse = upsertAgentlogsGroup(hooks.PostToolUse ?? [], createAgentlogsGroup(hookCommand, "Bash"));
   hooks.Stop = upsertAgentlogsGroup(hooks.Stop ?? [], createAgentlogsGroup(hookCommand));
 
   parsed.hooks = hooks;
@@ -102,8 +104,9 @@ function isAgentlogsCodexHookGroup(group: CodexMatcherGroup): boolean {
   );
 }
 
-function createAgentlogsGroup(command: string): CodexMatcherGroup {
+function createAgentlogsGroup(command: string, matcher?: string): CodexMatcherGroup {
   return {
+    ...(matcher ? { matcher } : {}),
     hooks: [
       {
         type: "command",

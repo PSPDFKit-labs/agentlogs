@@ -46,7 +46,7 @@ AgentLogs fixes that:
 | -------------------------------------------------------------- | ----------- | --------- | --------------- |
 | [Claude Code](https://agentlogs.ai/docs/agents/claude-code)    | ✓           | ✓         | ✓               |
 | [Cline](https://agentlogs.ai/docs/agents/cline) (experimental) | ✓           | ✓         | ✓               |
-| [Codex](https://agentlogs.ai/docs/agents/codex)                | ✓           | ✓         | —               |
+| [Codex](https://agentlogs.ai/docs/agents/codex)                | ✓           | ✓         | ✓               |
 | [OpenCode](https://agentlogs.ai/docs/agents/opencode)          | ✓           | ✓         | ✓               |
 | [Pi](https://agentlogs.ai/docs/agents/pi)                      | ✓           | ✓         | ✓               |
 
@@ -75,9 +75,9 @@ npx agentlogs cline install
 
 **Codex:**
 
-Run `npx agentlogs codex install` to write `~/.codex/hooks.json` and enable Codex hook capture.
+Run `npx agentlogs codex install` to write `~/.codex/hooks.json`, enable Codex hook capture, and track git commits in AgentLogs.
 Set `AGENTLOGS_CLI_PATH='bun /absolute/path/to/packages/cli/src/index.ts'` before starting Codex if you want hooks to use a local AgentLogs checkout while developing.
-Codex transcript capture does not install git commit tracking hooks by default.
+Codex does not currently let hooks rewrite the commit message body, so transcript URLs are not appended to commit messages automatically.
 See the full setup guide: https://agentlogs.ai/docs/agents/codex
 
 **OpenCode** — add to `opencode.json`:

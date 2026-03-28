@@ -12,7 +12,7 @@ Codex is OpenAI's CLI for coding with GPT models. AgentLogs provides automatic t
 
 - **Automatic capture** - Transcripts are uploaded after each agent response
 - **Native hooks** - Uses Codex's built-in hook system instead of a background watcher
-- **Transcript-only sync** - Captures transcripts without enabling git commit tracking by default
+- **Git commit tracking** - Uses `PreToolUse` and `PostToolUse` to link Codex-made commits back to the session in AgentLogs
 
 ## Installation
 
@@ -35,7 +35,7 @@ npx agentlogs codex install
 This does two things:
 
 - Adds `codex_hooks = true` under `[features]` in `~/.codex/config.toml`
-- Writes AgentLogs `SessionStart` and `Stop` entries to `~/.codex/hooks.json`
+- Writes AgentLogs `SessionStart`, `PreToolUse`, `PostToolUse`, and `Stop` entries to `~/.codex/hooks.json`
 
 Codex reads `hooks.json` when `codex_hooks` is enabled in `~/.codex/config.toml`.
 
@@ -56,6 +56,30 @@ Then create `~/.codex/hooks.json` with the following contents:
   "hooks": {
     "SessionStart": [
       {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [ -n \"$AGENTLOGS_CLI_PATH\" ]; then exec $AGENTLOGS_CLI_PATH codex hook; else exec npx -y agentlogs@latest codex hook; fi'",
+            "timeoutSec": 30
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c 'if [ -n \"$AGENTLOGS_CLI_PATH\" ]; then exec $AGENTLOGS_CLI_PATH codex hook; else exec npx -y agentlogs@latest codex hook; fi'",
+            "timeoutSec": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
         "hooks": [
           {
             "type": "command",
@@ -89,9 +113,13 @@ You can also place the same `hooks.json` file in a project-local `.codex/` direc
 ## How It Works
 
 - **SessionStart** confirms the hook wiring and gives AgentLogs a native Codex integration point.
+- **PreToolUse** uploads the current transcript before `git commit` so the session already exists in AgentLogs.
+- **PostToolUse** records successful git commits against that session in AgentLogs.
 - **Stop** uploads the current transcript after each completed agent response.
 
 Uploads are deduplicated server-side by session ID, so repeated Stop events update the same transcript instead of creating duplicates.
+
+Codex does not currently support hook-driven command rewriting for `PreToolUse`, so AgentLogs can track commits in the dashboard but cannot automatically append a transcript URL to the git commit message body.
 
 ## Manual Upload
 

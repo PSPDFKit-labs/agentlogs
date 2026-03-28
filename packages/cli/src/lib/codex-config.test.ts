@@ -29,7 +29,7 @@ unified_exec = true
 });
 
 describe("updateHooksFileContents", () => {
-  it("installs AgentLogs SessionStart and Stop hooks while preserving unrelated hooks", () => {
+  it("installs AgentLogs Codex hooks while preserving unrelated hooks", () => {
     const input = JSON.stringify(
       {
         hooks: {
@@ -51,12 +51,18 @@ describe("updateHooksFileContents", () => {
 
     const output = updateHooksFileContents(input, HOOK_COMMAND);
     const parsed = JSON.parse(output) as {
-      hooks: Record<string, Array<{ hooks: Array<{ command: string; statusMessage?: string }> }>>;
+      hooks: Record<string, Array<{ matcher?: string; hooks: Array<{ command: string; statusMessage?: string }> }>>;
     };
 
     expect(parsed.hooks.SessionStart).toHaveLength(1);
     expect(parsed.hooks.SessionStart[0].hooks[0].command).toBe(HOOK_COMMAND);
     expect(parsed.hooks.SessionStart[0].hooks[0].statusMessage).toBeUndefined();
+    expect(parsed.hooks.PreToolUse).toHaveLength(1);
+    expect(parsed.hooks.PreToolUse[0].matcher).toBe("Bash");
+    expect(parsed.hooks.PreToolUse[0].hooks[0].command).toBe(HOOK_COMMAND);
+    expect(parsed.hooks.PostToolUse).toHaveLength(1);
+    expect(parsed.hooks.PostToolUse[0].matcher).toBe("Bash");
+    expect(parsed.hooks.PostToolUse[0].hooks[0].command).toBe(HOOK_COMMAND);
     expect(parsed.hooks.Stop).toHaveLength(2);
     expect(parsed.hooks.Stop.some((group) => group.hooks[0].command === "echo keep-me")).toBe(true);
   });
@@ -87,5 +93,7 @@ describe("updateHooksFileContents", () => {
     };
 
     expect(parsed.hooks.Stop.filter((group) => group.hooks[0].command === HOOK_COMMAND)).toHaveLength(1);
+    expect(parsed.hooks.PreToolUse.filter((group) => group.hooks[0].command === HOOK_COMMAND)).toHaveLength(1);
+    expect(parsed.hooks.PostToolUse.filter((group) => group.hooks[0].command === HOOK_COMMAND)).toHaveLength(1);
   });
 });

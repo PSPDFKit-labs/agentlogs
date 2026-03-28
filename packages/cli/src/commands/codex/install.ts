@@ -17,7 +17,7 @@ export async function codexInstallCommand(): Promise<void> {
       console.log("Enabled Codex hooks via [features].codex_hooks = true.");
     }
     if (result.hooksUpdated) {
-      console.log("Wrote AgentLogs SessionStart and Stop hook entries.");
+      console.log("Wrote AgentLogs SessionStart, PreToolUse, PostToolUse, and Stop hook entries.");
       console.log("Hooks prefer AGENTLOGS_CLI_PATH when set and otherwise fall back to agentlogs@latest.");
     }
   }
