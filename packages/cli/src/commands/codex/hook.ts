@@ -134,6 +134,9 @@ function extractToolOutputText(value: unknown, depth = 0): string | undefined {
 
   if (typeof value === "string") {
     const trimmed = value.trim();
+    if (!trimmed) {
+      return undefined;
+    }
     if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
       try {
         const parsed = JSON.parse(value) as unknown;
@@ -146,19 +149,29 @@ function extractToolOutputText(value: unknown, depth = 0): string | undefined {
     return value;
   }
 
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const nested = extractToolOutputText(item, depth + 1);
+      if (nested) {
+        return nested;
+      }
+    }
+    return undefined;
+  }
+
   if (typeof value !== "object") {
     return undefined;
   }
 
   const record = value as Record<string, unknown>;
-  for (const key of ["output", "stdout", "content", "message", "stderr"]) {
+  for (const key of ["aggregated_output", "formatted_output", "output", "stdout", "content", "message", "stderr"]) {
     const nested = extractToolOutputText(record[key], depth + 1);
     if (nested) {
       return nested;
     }
   }
 
-  return JSON.stringify(record);
+  return undefined;
 }
 
 async function handlePreToolUse(hookInput: CodexHookInput, uploadFn: CodexUploadFn): Promise<void> {

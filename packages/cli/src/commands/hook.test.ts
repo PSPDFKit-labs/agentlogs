@@ -309,6 +309,47 @@ describe("processCodexHookInput", () => {
     expect(typeof trackCalls[0].timestamp).toBe("string");
   });
 
+  it("tracks Codex git commits from aggregated tool output without polluting the title", async () => {
+    const trackCalls: Array<Record<string, unknown>> = [];
+
+    const response = await processCodexHookInput(
+      {
+        hook_event_name: "PostToolUse",
+        session_id: "session-123",
+        cwd: "/repo",
+        tool_name: "Bash",
+        tool_input: {
+          command: 'git commit -m "Test commit"',
+        },
+        tool_response: {
+          stdout: "",
+          stderr: "",
+          aggregated_output: "[main abc1234] Test commit\n 1 file changed, 1 insertion(+)\n",
+          exit_code: 0,
+          status: "completed",
+        },
+      },
+      {
+        getTranscriptIdFn: async () => "transcript-123",
+        trackCommitFn: async (payload) => {
+          trackCalls.push(payload as unknown as Record<string, unknown>);
+        },
+      },
+    );
+
+    expect(response).toEqual({});
+    expect(trackCalls).toHaveLength(1);
+    expect(trackCalls[0]).toMatchObject({
+      transcriptId: "transcript-123",
+      repoPath: "/repo",
+      commitSha: "abc1234",
+      commitTitle: "Test commit",
+      branch: "main",
+    });
+    expect(String(trackCalls[0].commitTitle)).not.toContain("1 file changed");
+    expect(String(trackCalls[0].commitTitle)).not.toContain("exit_code");
+  });
+
   it("does not track failed git commits on PostToolUse", async () => {
     let trackCalled = false;
 
