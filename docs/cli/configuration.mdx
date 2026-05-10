@@ -14,7 +14,10 @@ Repository permissions are configured in `settings.json`:
 ```jsonc
 {
   // Capture mode: "denylist" (default) or "allowlist"
-  "mode": "denylist",
+  "allowMode": "denylist",
+
+  // Global default for adding transcript links to commit messages
+  "addTranscriptLinkToCommit": true,
 
   // Per-repository settings
   "repos": {
@@ -25,6 +28,10 @@ Repository permissions are configured in `settings.json`:
     },
     "github.com/myorg/private-repo": {
       "allow": false,
+    },
+    "github.com/myorg/no-commit-links": {
+      "allow": true,
+      "addTranscriptLinkToCommit": false,
     },
   },
 }
@@ -37,9 +44,11 @@ Repository permissions are configured in `settings.json`:
 
 ### Settings Fields
 
-| Field                   | Type                                  | Description                                |
-| ----------------------- | ------------------------------------- | ------------------------------------------ |
-| `mode`                  | `"denylist"` \| `"allowlist"`         | Capture mode                               |
-| `repos`                 | object                                | Per-repo settings keyed by repo identifier |
-| `repos[key].allow`      | boolean                               | Whether to capture this repo               |
-| `repos[key].visibility` | `"private"` \| `"team"` \| `"public"` | Visibility override                        |
+| Field                                  | Type                                  | Description                                   |
+| -------------------------------------- | ------------------------------------- | --------------------------------------------- |
+| `allowMode`                            | `"denylist"` \| `"allowlist"`         | Capture mode                                  |
+| `addTranscriptLinkToCommit`            | boolean                               | Global default for adding transcript links    |
+| `repos`                                | object                                | Per-repo settings keyed by repo identifier    |
+| `repos[key].allow`                     | boolean                               | Whether to capture this repo                  |
+| `repos[key].visibility`                | `"private"` \| `"team"` \| `"public"` | Visibility override                           |
+| `repos[key].addTranscriptLinkToCommit` | boolean                               | Per-repo override for adding transcript links |

@@ -5,24 +5,42 @@ description: Complete CLI command reference
 
 # Command Reference
 
+All examples use `npx agentlogs`. If you have the package installed globally, replace `npx agentlogs` with
+`agentlogs`.
+
 ## Authentication
 
 ### login
 
-Authenticate with AgentLogs using device authorization.
+Authenticate with an AgentLogs server.
 
 ```bash
-npx agentlogs login <hostname>
+npx agentlogs login <hostname> [options]
 ```
 
-Examples:
+**Arguments:**
+
+- `hostname` - Required. AgentLogs server hostname, for example `agentlogs.ai` or `localhost:3000`
+
+**Options:**
+
+- `--token <token>` - OAuth access token for direct authentication. This skips the browser-based device flow.
+
+**Examples:**
 
 ```bash
+# Log in to the hosted AgentLogs service
 npx agentlogs login agentlogs.ai
+
+# Log in to a self-hosted server
 npx agentlogs login localhost:3000
+
+# Log in non-interactively with an access token
+npx agentlogs login agentlogs.ai --token "$AGENTLOGS_AUTH_TOKEN"
 ```
 
-The hostname is required. The CLI opens a browser for authentication and stores your token locally for that host.
+Without `--token`, the CLI starts a device authorization flow, prints a verification URL and user code, and stores the
+access token locally for the selected host.
 
 ### logout
 
@@ -32,12 +50,13 @@ Remove stored authentication credentials.
 npx agentlogs logout [hostname]
 ```
 
-- With a hostname, logs out only from that host.
-- Without a hostname, logs out from all configured hosts.
+**Arguments:**
+
+- `hostname` - Optional. Hostname to log out from. When omitted, logs out from all configured hosts.
 
 ### status
 
-Show current authentication status and account info.
+Show current authentication status and account info for configured hosts.
 
 ```bash
 npx agentlogs status
@@ -60,7 +79,7 @@ agentlogs.ai (https://agentlogs.ai)
 
 ### upload
 
-Interactively browse and upload transcripts from any agent (Claude Code, Codex, OpenCode, Pi).
+Interactively browse and upload transcripts from supported agents.
 
 ```bash
 npx agentlogs upload [directory] [options]
@@ -68,36 +87,32 @@ npx agentlogs upload [directory] [options]
 
 **Arguments:**
 
-- `directory` - Optional. Filter to transcripts from this directory
+- `directory` - Optional. Filter discovered transcripts to sessions from this directory.
 
 **Options:**
 
-- `-s, --source <source>` - Filter by source: `claude-code`, `codex`, `opencode`, or `pi`
-- `-l, --latest` - Upload the most recent transcript without showing picker
-
-**Behavior:**
-
-- Discovers transcripts from all installed agents
-- Shows an interactive picker to select a transcript
-- Displays time, source, directory, and preview for each transcript
-- Uploads the selected transcript
+- `-s, --source <source>` - Filter by source. Valid values are `claude-code`, `cline`, `codex`, `opencode`, and `pi`.
+- `-l, --latest` - Upload the most recent matching transcript without showing the picker.
 
 **Examples:**
 
 ```bash
-# Interactive picker with all transcripts
+# Interactive picker with all discovered transcripts
 npx agentlogs upload
 
-# Only show transcripts from current directory
+# Only show transcripts from the current directory
 npx agentlogs upload .
 
 # Only show Claude Code transcripts
 npx agentlogs upload --source claude-code
 
-# Upload most recent transcript without picker
+# Only show Cline transcripts
+npx agentlogs upload --source cline
+
+# Upload the most recent transcript without showing the picker
 npx agentlogs upload --latest
 
-# Upload most recent from current directory
+# Upload the most recent transcript from the current directory
 npx agentlogs upload . --latest
 ```
 
@@ -107,39 +122,36 @@ npx agentlogs upload . --latest
 
 ### claudecode sync
 
-Sync all local Claude Code transcripts to AgentLogs.
+Upload local Claude Code transcripts that are missing or outdated on the server.
 
 ```bash
-npx agentlogs claudecode sync [claudeDir]
+npx agentlogs claudecode sync [claudeDir] [options]
 ```
 
 **Arguments:**
 
-- `claudeDir` - Optional. Path to Claude data directory. Defaults to `~/.claude`
+- `claudeDir` - Optional. Claude data directory. Defaults to `~/.claude`.
 
 **Options:**
 
-- `--cwd <path>` - Only upload transcripts from sessions in a specific working directory
+- `-r, --repo <repoId>` - Only sync transcripts for the provided repository identifier.
 
-**Behavior:**
-
-- Scans for transcript files in the Claude directory
-- Skips already-uploaded transcripts (deduplication via SHA256)
-- Respects your allow/deny settings
-
-**Example:**
+**Examples:**
 
 ```bash
-# Sync all transcripts
+# Sync all Claude Code transcripts from the default Claude data directory
 npx agentlogs claudecode sync
 
-# Only sync transcripts from a specific project
-npx agentlogs claudecode sync --cwd /path/to/my-project
+# Sync all Claude Code transcripts from an explicit Claude data directory
+npx agentlogs claudecode sync ~/.claude
+
+# Sync only transcripts for a specific repository ID
+npx agentlogs claudecode sync --repo github.com/myorg/myrepo
 ```
 
 ### claudecode upload
 
-Upload a specific transcript file.
+Upload a specific Claude Code transcript.
 
 ```bash
 npx agentlogs claudecode upload <transcript>
@@ -147,17 +159,17 @@ npx agentlogs claudecode upload <transcript>
 
 **Arguments:**
 
-- `transcript` - Path to the JSONL transcript file
+- `transcript` - Required. Path or alias for a transcript JSONL file.
 
 ### claudecode hook
 
-Hook entry point for Claude Code integration. Called automatically by Claude Code hooks.
+Process Claude Code hook input from stdin.
 
 ```bash
 npx agentlogs claudecode hook
 ```
 
-Reads hook data from stdin. This command is meant to be called from Claude Code's hook system, not manually.
+This command is intended to be called by Claude Code hooks.
 
 ---
 
@@ -165,7 +177,7 @@ Reads hook data from stdin. This command is meant to be called from Claude Code'
 
 ### codex upload
 
-Upload a Codex transcript file.
+Upload a Codex transcript.
 
 ```bash
 npx agentlogs codex upload <transcript>
@@ -173,7 +185,7 @@ npx agentlogs codex upload <transcript>
 
 **Arguments:**
 
-- `transcript` - Path to the JSONL transcript file
+- `transcript` - Required. Path or alias for a Codex transcript JSONL file.
 
 **Example:**
 
@@ -183,28 +195,24 @@ npx agentlogs codex upload ~/.codex/sessions/2025/01/25/session-abc123.jsonl
 
 ### codex hook
 
-Hook entry point for Codex integration. Called automatically by Codex hooks.
+Process Codex hook input from stdin.
 
 ```bash
-npx agentlogs@latest codex hook
+npx agentlogs codex hook
 ```
 
-Reads hook data from stdin. This command is meant to be called from Codex's hook system, not manually.
+This command is intended to be called by Codex hooks.
 
 ### codex install
 
-Install the AgentLogs Codex hook integration into `~/.codex`.
+Install AgentLogs Codex hooks into `~/.codex`.
 
 ```bash
 npx agentlogs codex install
 ```
 
-This command:
-
-- Enables `codex_hooks` in `~/.codex/config.toml`
-- Writes AgentLogs hook entries to `~/.codex/hooks.json`
-- Prefers `AGENTLOGS_CLI_PATH` when set, otherwise runs `npx -y agentlogs@latest codex hook`
-- Captures transcripts only; git commit tracking hooks are not installed by default
+This command enables Codex hooks and writes AgentLogs hook entries to `~/.codex/hooks.json`. Installed hooks prefer
+`AGENTLOGS_CLI_PATH` when set and otherwise run `npx -y agentlogs@latest codex hook`.
 
 ---
 
@@ -220,9 +228,7 @@ npx agentlogs opencode upload <sessionId>
 
 **Arguments:**
 
-- `sessionId` - The OpenCode session ID to upload
-
-Sessions are read from `~/.local/share/opencode/storage/`.
+- `sessionId` - Required. OpenCode session ID to upload.
 
 **Example:**
 
@@ -232,19 +238,60 @@ npx agentlogs opencode upload ses_abc123def456
 
 ### opencode hook
 
-Hook entry point for OpenCode plugin integration. Called automatically by the OpenCode plugin.
+Process OpenCode hook input from stdin.
 
 ```bash
 npx agentlogs opencode hook
 ```
 
-Reads hook data from stdin and outputs JSON response. This command handles:
+This command is intended to be called by the OpenCode plugin.
 
-- **tool.execute.before** - Intercepts git commits to add transcript links
-- **tool.execute.after** - Tracks commit metadata (SHA, branch, title)
-- **session.idle** - Uploads the complete transcript
+---
 
-This command is meant to be called from the OpenCode plugin, not manually.
+## Cline
+
+### cline upload
+
+Upload a Cline task transcript.
+
+```bash
+npx agentlogs cline upload [taskIdOrPath]
+```
+
+**Arguments:**
+
+- `taskIdOrPath` - Optional. Cline task ID or path to a task directory/file. When omitted, the CLI lists recent tasks.
+
+**Examples:**
+
+```bash
+# List recent Cline tasks and choose one to upload
+npx agentlogs cline upload
+
+# Upload by task ID
+npx agentlogs cline upload 01234567-89ab-cdef-0123-456789abcdef
+
+# Upload by task directory or file path
+npx agentlogs cline upload ~/Documents/Cline/Tasks/01234567-89ab-cdef-0123-456789abcdef
+```
+
+### cline hook
+
+Process Cline hook input from stdin.
+
+```bash
+npx agentlogs cline hook
+```
+
+This command is intended to be called by Cline hooks.
+
+### cline install
+
+Install AgentLogs hooks into Cline's global hooks directory.
+
+```bash
+npx agentlogs cline install
+```
 
 ---
 
@@ -260,45 +307,37 @@ npx agentlogs pi upload [sessionIdOrPath]
 
 **Arguments:**
 
-- `sessionIdOrPath` - Optional. Session ID or path to session file
-
-**Behavior:**
-
-- With no argument: lists recent Pi sessions
-- With session ID: finds and uploads that session
-- With file path: uploads the specified JSONL file
-
-Sessions are read from `~/.pi/agent/sessions/`.
+- `sessionIdOrPath` - Optional. Pi session ID or path to a session file. When omitted, the CLI lists recent sessions.
 
 **Examples:**
 
 ```bash
-# List recent sessions
+# List recent Pi sessions and choose one to upload
 npx agentlogs pi upload
 
-# Upload by session ID (partial match works)
+# Upload by session ID
 npx agentlogs pi upload abc123
 
-# Upload by file path
+# Upload by session file path
 npx agentlogs pi upload ~/.pi/agent/sessions/--myproject--/2025-01-25_abc123.jsonl
 ```
 
 ### pi hook
 
-Hook entry point for Pi extension integration. Called automatically by the Pi extension.
+Process Pi hook input from stdin.
 
 ```bash
 npx agentlogs pi hook
 ```
 
-Reads hook data from stdin and outputs JSON response. This command handles:
+Reads hook data from stdin and outputs a JSON response. This command handles:
 
-- **tool_call** - Intercepts git commits to add transcript links
-- **tool_result** - Tracks commit metadata (SHA, branch, title)
-- **agent_end** - Uploads the transcript after each agent turn completes
-- **session_shutdown** - Uploads the complete transcript
+- **tool_call** - Intercepts git commits to add transcript links.
+- **tool_result** - Tracks commit metadata, including SHA, branch, and title.
+- **agent_end** - Uploads the transcript after each agent turn completes.
+- **session_shutdown** - Uploads the complete transcript when the session ends.
 
-This command is meant to be called from the Pi extension, not manually.
+This command is intended to be called by the Pi extension, not manually.
 
 ---
 
@@ -306,7 +345,7 @@ This command is meant to be called from the Pi extension, not manually.
 
 ### settings
 
-View or modify repository settings.
+View or modify AgentLogs settings.
 
 ```bash
 npx agentlogs settings [options]
@@ -314,77 +353,76 @@ npx agentlogs settings [options]
 
 **Options:**
 
-- `--mode <mode>` - Set capture mode: `denylist` or `allowlist`
-- `--json` - Output settings as JSON
+- `--allowMode <mode>` - Set capture mode. Valid values are `allowlist` and `denylist`.
 
-**Example:**
+**Examples:**
 
 ```bash
 # View current settings
 npx agentlogs settings
 
 # Switch to allowlist mode
-npx agentlogs settings --mode allowlist
+npx agentlogs settings --allowMode allowlist
+
+# Switch back to denylist mode
+npx agentlogs settings --allowMode denylist
 ```
 
 ### allow
 
-Allow a repository to be captured.
+Allow capture for the current repository.
 
 ```bash
-npx agentlogs allow <path> [options]
+npx agentlogs allow [options]
 ```
 
-**Arguments:**
-
-- `path` - Path to the repository
+The repository is detected from the current working directory. Run this command from a git repository with a remote
+origin configured.
 
 **Options:**
 
-- `--visibility <level>` - Set visibility: `private`, `team`, or `public`
+- `--visibility <visibility>` - Set visibility. Valid values are `public`, `team`, and `private`.
+- `--public` - Set visibility to `public`.
+- `--team` - Set visibility to `team`.
+- `--private` - Set visibility to `private`.
 
-**Example:**
+**Examples:**
 
 ```bash
-# Allow a repo with default visibility
-npx agentlogs allow /path/to/repo
+# Allow the current repository with the server default visibility
+npx agentlogs allow
 
-# Allow with explicit visibility
-npx agentlogs allow /path/to/repo --visibility private
+# Allow the current repository and force private visibility
+npx agentlogs allow --visibility private
+
+# Allow the current repository and force team visibility
+npx agentlogs allow --team
 ```
 
 ### deny
 
-Deny a repository from being captured.
+Deny capture for the current repository.
 
 ```bash
-npx agentlogs deny <path>
+npx agentlogs deny
 ```
 
-**Arguments:**
-
-- `path` - Path to the repository
-
-**Example:**
-
-```bash
-npx agentlogs deny /path/to/secret-repo
-```
+The repository is detected from the current working directory. Run this command from a git repository with a remote
+origin configured.
 
 ---
 
-## Global Options
+## Help
 
-These options work with any command:
-
-| Option      | Description             |
-| ----------- | ----------------------- |
-| `--help`    | Show help for a command |
-| `--version` | Show CLI version        |
-
-**Example:**
+Use `--help` or `-h` with any command to show its CLI help.
 
 ```bash
-# Get help for a specific command
+# Show top-level CLI help
+npx agentlogs --help
+
+# Show help for one command
+npx agentlogs upload --help
+
+# Show help for a nested command
 npx agentlogs claudecode sync --help
 ```

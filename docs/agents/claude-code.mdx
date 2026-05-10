@@ -56,8 +56,11 @@ npx agentlogs upload
 # Upload a specific transcript file
 npx agentlogs claudecode upload ~/.claude/projects/-path-to-project/session-id.jsonl
 
-# Sync all transcripts from a specific project
-npx agentlogs claudecode sync --cwd /path/to/project
+# Sync all Claude Code transcripts
+npx agentlogs claudecode sync
+
+# Sync transcripts for a specific repository ID
+npx agentlogs claudecode sync --repo github.com/myorg/myrepo
 ```
 
 The interactive `upload` command discovers transcripts from all agents and lets you pick one to upload.
