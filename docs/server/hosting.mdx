@@ -103,6 +103,16 @@ Before you deploy, make sure you have:
         users regular users immediately.
       </td>
     </tr>
+    <tr>
+      <td style={{ whiteSpace: "nowrap" }}>
+        <code>ALLOWED_GITHUB_ORGS</code>
+      </td>
+      <td style={{ whiteSpace: "nowrap" }}>unset</td>
+      <td>
+        Optional comma-separated GitHub org allowlist. When set, GitHub sign-in is restricted to members of at least one
+        listed org.
+      </td>
+    </tr>
   </tbody>
 </table>
 
@@ -136,6 +146,16 @@ If both GitHub and GitLab are configured, AgentLogs currently prefers GitHub for
       </td>
       <td style={{ whiteSpace: "nowrap" }}>unset</td>
       <td>Required if GitHub login is enabled. GitHub OAuth app client secret.</td>
+    </tr>
+    <tr>
+      <td style={{ whiteSpace: "nowrap" }}>
+        <code>ALLOWED_GITHUB_ORGS</code>
+      </td>
+      <td style={{ whiteSpace: "nowrap" }}>unset</td>
+      <td>
+        Optional. Restricts GitHub sign-in to members of the listed orgs. Use a comma-separated list like{" "}
+        <code>my-org,another-org</code>.
+      </td>
     </tr>
   </tbody>
 </table>

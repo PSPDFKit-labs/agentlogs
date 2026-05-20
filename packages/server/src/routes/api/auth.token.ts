@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { createDrizzle } from "../../db";
 import { session, user } from "../../db/schema";
 import { env } from "../../lib/env";
+import { fetchGithubProfile } from "../../lib/github-auth";
 
 interface NormalizedProfile {
   email: string;
@@ -42,16 +43,7 @@ function getConfiguredProviders(): OAuthProvider[] {
     providers.push({
       id: "github",
       userinfoUrl: "https://api.github.com/user",
-      normalizeProfile: (raw) => {
-        const email = raw.email as string;
-        if (!email) return null;
-        return {
-          email,
-          name: (raw.name as string) || (raw.login as string) || email,
-          username: ((raw.login as string) || email).toLowerCase(),
-          image: (raw.avatar_url as string) || null,
-        };
-      },
+      normalizeProfile: () => null,
     });
   }
 
@@ -60,8 +52,23 @@ function getConfiguredProviders(): OAuthProvider[] {
 
 /** Try each configured provider's userinfo endpoint with the token. Returns the first match. */
 async function resolveProfile(token: string): Promise<NormalizedProfile | null> {
+  if (env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET) {
+    try {
+      const githubProfile = await fetchGithubProfile(token, env.ALLOWED_GITHUB_ORGS);
+      if (githubProfile) {
+        return githubProfile;
+      }
+    } catch {
+      // Ignore and continue to the next configured provider.
+    }
+  }
+
   const providers = getConfiguredProviders();
   for (const provider of providers) {
+    if (provider.id === "github") {
+      continue;
+    }
+
     try {
       const resp = await fetch(provider.userinfoUrl, {
         headers: { Authorization: `Bearer ${token}` },

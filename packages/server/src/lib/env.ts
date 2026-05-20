@@ -90,6 +90,10 @@ class LocalBucket {
 const webUrl = process.env.WEB_URL || "http://localhost:3000";
 const storageDir = process.env.STORAGE_DIR || ".data/storage";
 const storageRoot = path.resolve(process.cwd(), storageDir);
+const allowedGithubOrgs = (process.env.ALLOWED_GITHUB_ORGS || "")
+  .split(",")
+  .map((org) => org.trim().toLowerCase())
+  .filter(Boolean);
 
 export const env = {
   DB: process.env.DB_LOCAL_PATH || ".data/db.sqlite",
@@ -98,6 +102,7 @@ export const env = {
   EMAIL_SENDER: process.env.EMAIL_SENDER || "",
   GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID || "",
   GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET || "",
+  ALLOWED_GITHUB_ORGS: allowedGithubOrgs,
   OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || "",
   AI_BASE_URL: process.env.AI_BASE_URL || "",
   AI_API_KEY: process.env.AI_API_KEY || "",

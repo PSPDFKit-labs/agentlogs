@@ -1,4 +1,4 @@
-import { betterAuth } from "better-auth";
+import { APIError, betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer, deviceAuthorization, genericOAuth } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { env } from "@/lib/env";
 import { createDrizzle } from "../db";
 import { user } from "../db/schema";
+import { fetchGithubProfile } from "./github-auth";
 import { logger } from "./logger";
 
 function hasGithubAuth(): boolean {
@@ -62,9 +63,35 @@ function buildAuth() {
         github: {
           clientId: env.GITHUB_CLIENT_ID,
           clientSecret: env.GITHUB_CLIENT_SECRET,
-          mapProfileToUser: (profile) => ({
-            username: profile.login.toLowerCase(),
-          }),
+          scope: env.ALLOWED_GITHUB_ORGS.length > 0 ? ["read:org"] : undefined,
+          getUserInfo: async (token) => {
+            const accessToken = token.accessToken;
+            if (!accessToken) {
+              throw new APIError("UNAUTHORIZED", {
+                code: "GITHUB_ACCESS_TOKEN_MISSING",
+                message: "GitHub did not return an access token.",
+              });
+            }
+
+            const profile = await fetchGithubProfile(accessToken, env.ALLOWED_GITHUB_ORGS);
+            if (!profile) {
+              return null;
+            }
+
+            return {
+              user: {
+                id: profile.id,
+                name: profile.name,
+                email: profile.email,
+                image: profile.image ?? undefined,
+                emailVerified: true,
+                username: profile.username,
+              },
+              data: {
+                login: profile.username,
+              },
+            };
+          },
         },
       }
     : {};

@@ -23,18 +23,19 @@ AgentLogs server is a unified TanStack Start application (web UI + API) that run
 
 ### Optional
 
-| Variable             | Default                                         | Description                                                |
-| -------------------- | ----------------------------------------------- | ---------------------------------------------------------- |
-| `DB_LOCAL_PATH`      | `.data/db.sqlite`                               | SQLite file location                                       |
-| `STORAGE_DIR`        | `.data/storage`                                 | Blob storage directory                                     |
-| `OPENROUTER_API_KEY` | unset                                           | Enables AI summary generation through OpenRouter           |
-| `AI_BASE_URL`        | unset                                           | Base URL for an OpenAI-compatible summary backend          |
-| `AI_MODEL`           | unset                                           | Model name for the OpenAI-compatible summary backend       |
-| `AI_API_KEY`         | unset                                           | Optional API key for the OpenAI-compatible summary backend |
-| `RESEND_API_KEY`     | unset                                           | Enables transactional emails                               |
-| `EMAIL_SENDER`       | `Philipp from AgentLogs <philipp@agentlogs.ai>` | Overrides the transactional email sender                   |
-| `PORT`               | `3000`                                          | HTTP server port                                           |
-| `HOST`               | `0.0.0.0`                                       | HTTP bind address                                          |
+| Variable              | Default                                         | Description                                                |
+| --------------------- | ----------------------------------------------- | ---------------------------------------------------------- |
+| `DB_LOCAL_PATH`       | `.data/db.sqlite`                               | SQLite file location                                       |
+| `STORAGE_DIR`         | `.data/storage`                                 | Blob storage directory                                     |
+| `ALLOWED_GITHUB_ORGS` | unset                                           | Optional comma-separated GitHub org allowlist for login    |
+| `OPENROUTER_API_KEY`  | unset                                           | Enables AI summary generation through OpenRouter           |
+| `AI_BASE_URL`         | unset                                           | Base URL for an OpenAI-compatible summary backend          |
+| `AI_MODEL`            | unset                                           | Model name for the OpenAI-compatible summary backend       |
+| `AI_API_KEY`          | unset                                           | Optional API key for the OpenAI-compatible summary backend |
+| `RESEND_API_KEY`      | unset                                           | Enables transactional emails                               |
+| `EMAIL_SENDER`        | `Philipp from AgentLogs <philipp@agentlogs.ai>` | Overrides the transactional email sender                   |
+| `PORT`                | `3000`                                          | HTTP server port                                           |
+| `HOST`                | `0.0.0.0`                                       | HTTP bind address                                          |
 
 AgentLogs chooses the summary backend in this order:
 
@@ -57,6 +58,9 @@ cp .env.example .env
 ```
 
 Edit `.env` with your GitHub OAuth credentials and `BETTER_AUTH_SECRET`.
+
+If you want to restrict GitHub login to members of specific organizations, set `ALLOWED_GITHUB_ORGS` to a
+comma-separated list such as `my-org,another-org`. This requires granting the app access to verify org membership.
 
 If you want automatic transcript titles, also configure either `OPENROUTER_API_KEY` or `AI_BASE_URL` + `AI_MODEL`.
 
