@@ -19,7 +19,7 @@ import { useDebugMode } from "@/hooks/use-debug-mode";
 import type { UnifiedTranscriptMessage } from "@agentlogs/shared/claudecode";
 import { getModelDisplayName } from "@agentlogs/shared/models";
 import { unifiedTranscriptSchema } from "@agentlogs/shared/schemas";
-import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import {
   ArrowDownToLine,
   ArrowUpFromLine,
@@ -73,55 +73,70 @@ import { isSteeringMessage } from "../../../lib/message-segments";
 import { deleteTranscript, getTranscript, updateTitle, updateVisibility } from "../../../lib/server-functions";
 
 export const Route = createFileRoute("/_app/app/logs/$id")({
-  loader: ({ params }) => getTranscript({ data: params.id }),
+  loader: async ({ params, context }) => {
+    if (!context.session) {
+      throw redirect({
+        to: "/s/$sessionId",
+        params: { sessionId: params.id },
+      });
+    }
+
+    try {
+      return await getTranscript({ data: params.id });
+    } catch {
+      throw redirect({
+        to: "/s/$sessionId",
+        params: { sessionId: params.id },
+      });
+    }
+  },
   staleTime: 30_000,
   gcTime: 5 * 60_000, // Keep in cache 5min for back navigation
   pendingComponent: TranscriptPendingComponent,
   pendingMinMs: 100, // Only show loading if takes > 100ms (avoids flash)
-  component: TranscriptDetailComponent,
-  head: ({ loaderData }) => {
-    if (!loaderData) return {};
-
-    const title = loaderData.summary || loaderData.preview || "Untitled Thread";
-    const description = loaderData.preview || "View this AI agent transcript on AgentLogs";
-    const baseUrl = loaderData.baseUrl || "";
-    const pageUrl = `${baseUrl}/app/logs/${loaderData.id}`;
-    const isPublic = loaderData.visibility === "public";
-
-    // Only include OG image for public transcripts (avoids 404s that get cached by social platforms)
-    const ogImageUrl = isPublic ? `${baseUrl}/api/og/${loaderData.id}.png` : undefined;
-
-    return {
-      meta: [
-        { title: `${title} - AgentLogs` },
-        { name: "description", content: description },
-        // Open Graph
-        { property: "og:title", content: title },
-        { property: "og:description", content: description },
-        ...(ogImageUrl
-          ? [
-              { property: "og:image", content: ogImageUrl },
-              { property: "og:image:width", content: "1200" },
-              { property: "og:image:height", content: "630" },
-            ]
-          : []),
-        { property: "og:url", content: pageUrl },
-        { property: "og:type", content: "article" },
-        { property: "og:site_name", content: "AgentLogs" },
-        // Twitter Card
-        {
-          name: "twitter:card",
-          content: isPublic ? "summary_large_image" : "summary",
-        },
-        { name: "twitter:title", content: title },
-        { name: "twitter:description", content: description },
-        ...(ogImageUrl ? [{ name: "twitter:image", content: ogImageUrl }] : []),
-      ],
-    };
-  },
+  component: TranscriptDetailRouteComponent,
+  head: ({ loaderData }) => buildTranscriptHead(loaderData, "app/logs"),
 });
 
-function TranscriptPendingComponent() {
+export function buildTranscriptHead(
+  loaderData: Awaited<ReturnType<typeof getTranscript>> | undefined,
+  routePrefix: "app/logs" | "s",
+) {
+  if (!loaderData) return {};
+
+  const title = loaderData.summary || loaderData.preview || "Untitled Thread";
+  const description = loaderData.preview || "View this AI agent transcript on AgentLogs";
+  const baseUrl = loaderData.baseUrl || "";
+  const pageUrl = `${baseUrl}/${routePrefix}/${loaderData.id}`;
+  const isPublic = loaderData.visibility === "public";
+
+  const ogImageUrl = isPublic ? `${baseUrl}/api/og/${loaderData.id}.png` : undefined;
+
+  return {
+    meta: [
+      { title: `${title} - AgentLogs` },
+      { name: "description", content: description },
+      { property: "og:title", content: title },
+      { property: "og:description", content: description },
+      ...(ogImageUrl
+        ? [
+            { property: "og:image", content: ogImageUrl },
+            { property: "og:image:width", content: "1200" },
+            { property: "og:image:height", content: "630" },
+          ]
+        : []),
+      { property: "og:url", content: pageUrl },
+      { property: "og:type", content: "article" },
+      { property: "og:site_name", content: "AgentLogs" },
+      { name: "twitter:card", content: isPublic ? "summary_large_image" : "summary" },
+      { name: "twitter:title", content: title },
+      { name: "twitter:description", content: description },
+      ...(ogImageUrl ? [{ name: "twitter:image", content: ogImageUrl }] : []),
+    ],
+  };
+}
+
+export function TranscriptPendingComponent() {
   return (
     <div className="flex min-h-[50vh] items-center justify-center">
       <div className="flex flex-col items-center gap-3">
@@ -200,8 +215,12 @@ function getUserMessagesWithIndices(messages: UnifiedTranscriptMessage[]): Array
   return result;
 }
 
-function TranscriptDetailComponent() {
+function TranscriptDetailRouteComponent() {
   const data = Route.useLoaderData();
+  return <TranscriptDetailComponent data={data} />;
+}
+
+export function TranscriptDetailComponent({ data }: { data: Awaited<ReturnType<typeof getTranscript>> }) {
   const [debugMode] = useDebugMode();
 
   // Parse and validate the unified transcript
