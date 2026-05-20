@@ -8,6 +8,7 @@ import { createDrizzle } from "../db";
 import { user } from "../db/schema";
 import { fetchGithubProfile } from "./github-auth";
 import { logger } from "./logger";
+import { autoAddUserToConfiguredTeam } from "./team-auto-enroll";
 
 function hasGithubAuth(): boolean {
   return Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET);
@@ -121,7 +122,8 @@ function buildAuth() {
             if (!env.WAITLIST_ENABLED) {
               await db.update(user).set({ role: "user" }).where(eq(user.id, newUser.id));
             }
-            // else: leave schema default "waitlist" in place
+
+            await autoAddUserToConfiguredTeam(db, newUser.id);
           },
         },
       },

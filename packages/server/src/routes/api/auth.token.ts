@@ -4,6 +4,7 @@ import { createDrizzle } from "../../db";
 import { session, user } from "../../db/schema";
 import { env } from "../../lib/env";
 import { fetchGithubProfile } from "../../lib/github-auth";
+import { autoAddUserToConfiguredTeam } from "../../lib/team-auto-enroll";
 
 interface NormalizedProfile {
   email: string;
@@ -132,6 +133,10 @@ export const Route = createFileRoute("/api/auth/token")({
             })
             .returning();
           existingUser = newUsers[0];
+
+          if (existingUser) {
+            await autoAddUserToConfiguredTeam(db, existingUser.id);
+          }
         }
 
         if (!existingUser) {

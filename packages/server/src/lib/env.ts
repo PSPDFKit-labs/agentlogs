@@ -113,4 +113,5 @@ export const env = {
   GITLAB_CLIENT_SECRET: process.env.GITLAB_CLIENT_SECRET || "",
   GITLAB_ISSUER: process.env.GITLAB_ISSUER || "https://gitlab.com",
   WAITLIST_ENABLED: process.env.WAITLIST_ENABLED !== "false",
+  AUTO_ADD_TEAM_ID: process.env.AUTO_ADD_TEAM_ID || "",
 };
