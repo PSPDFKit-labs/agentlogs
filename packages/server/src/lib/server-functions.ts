@@ -13,13 +13,13 @@ import {
   transcripts,
   user,
   userRoles,
-  visibilityOptions,
   type UserRole,
   type VisibilityOption,
 } from "../db/schema";
 import { createAuth } from "./auth";
 import { requireActiveUser, tryGetActiveUserId } from "./access-control";
 import { logger } from "./logger";
+import { getVisibilityErrorMessage, isAllowedVisibility } from "./visibility";
 
 let cuidGenerator: (() => string) | undefined;
 const getCuidGenerator = () => {
@@ -241,6 +241,7 @@ export const getTranscript = createServerFn({ method: "GET" })
       createdAt: transcript.createdAt,
       updatedAt: transcript.updatedAt,
       visibility: transcript.visibility,
+      publicSharingEnabled: env.PUBLIC_SHARING_ENABLED,
       unifiedTranscript,
       userName: transcript.userName,
       userUsername: transcript.userUsername,
@@ -896,8 +897,8 @@ export const updateVisibility = createServerFn({ method: "POST" })
     }
 
     // Validate visibility value
-    if (!visibility || !visibilityOptions.includes(visibility as VisibilityOption)) {
-      throw new Error(`Invalid visibility. Must be one of: ${visibilityOptions.join(", ")}`);
+    if (!visibility || !isAllowedVisibility(visibility)) {
+      throw new Error(getVisibilityErrorMessage());
     }
 
     // Determine sharedWithTeamId based on visibility

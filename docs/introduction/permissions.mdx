@@ -66,6 +66,11 @@ npx agentlogs allow --visibility private
 npx agentlogs allow --visibility public
 ```
 
+<Note>
+  Self-hosted servers can disable public sharing entirely with <code>PUBLIC_SHARING_ENABLED=false</code>. In that mode,
+  only <code>private</code> and <code>team</code> visibility are allowed.
+</Note>
+
 ## Configuration File
 
 Your permission settings are stored in `~/.config/agentlogs/settings.json`:

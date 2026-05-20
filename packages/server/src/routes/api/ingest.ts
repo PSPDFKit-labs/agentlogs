@@ -12,6 +12,7 @@ import { getAuthErrorResponse, requireActiveUserFromSession } from "../../lib/ac
 import { generateSummary } from "../../lib/ai/summarizer";
 import { checkRepoIsPublic } from "../../lib/github";
 import { logger } from "../../lib/logger";
+import { getVisibilityErrorMessage, isAllowedVisibility, isVisibilityOption } from "../../lib/visibility";
 
 export const Route = createFileRoute("/api/ingest")({
   server: {
@@ -58,11 +59,14 @@ export const Route = createFileRoute("/api/ingest")({
 
         // Visibility override from client (if user configured it for this repo)
         const visibilityOverride = formData.get("visibility");
-        const clientVisibility =
-          typeof visibilityOverride === "string" &&
-          (visibilityOverride === "private" || visibilityOverride === "team" || visibilityOverride === "public")
-            ? (visibilityOverride as VisibilityOption)
-            : null;
+        let clientVisibility: VisibilityOption | null = null;
+        if (typeof visibilityOverride === "string" && visibilityOverride.length > 0) {
+          if (!isVisibilityOption(visibilityOverride) || !isAllowedVisibility(visibilityOverride)) {
+            logger.warn("Ingest rejected: invalid visibility override", { userId, visibilityOverride });
+            return json({ error: getVisibilityErrorMessage() }, { status: 400 });
+          }
+          clientVisibility = visibilityOverride;
+        }
 
         // Validate hash against unified transcript (not raw) so conversion changes are detected
         const computedHash = await sha256Hex(unifiedTranscriptField);
@@ -492,7 +496,7 @@ type DefaultSharingSettings = {
  * Always fetches fresh from GitHub, updates cache, falls back on failure.
  *
  * Logic:
- * 1. If repo is open source → public
+ * 1. If repo is open source and public sharing is enabled → public
  * 2. If has a repo AND user is in a team → team (with specific teamId)
  * 3. Otherwise → private (includes non-repo transcripts)
  */
@@ -510,14 +514,14 @@ async function getDefaultVisibility(
       // Update cache with fresh value
       await db.update(repos).set({ isPublic: freshIsPublic }).where(eq(repos.id, repoDbId));
 
-      if (freshIsPublic) {
+      if (freshIsPublic && env.PUBLIC_SHARING_ENABLED) {
         logger.debug("Repo is public, defaulting to public visibility", { repoFullName });
         return { visibility: "public", sharedWithTeamId: null };
       }
     } else {
       // API failed - check cached value as fallback
       const repo = await db.query.repos.findFirst({ where: eq(repos.id, repoDbId) });
-      if (repo?.isPublic) {
+      if (repo?.isPublic && env.PUBLIC_SHARING_ENABLED) {
         logger.debug("Using cached isPublic=true, defaulting to public visibility", { repoFullName });
         return { visibility: "public", sharedWithTeamId: null };
       }

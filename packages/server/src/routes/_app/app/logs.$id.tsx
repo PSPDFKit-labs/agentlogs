@@ -288,7 +288,12 @@ function TranscriptDetailComponent() {
             <span>{timeAgo}</span>
           </div>
           {/* Visibility */}
-          <VisibilitySection transcriptId={data.id} visibility={data.visibility} isOwner={data.isOwner} />
+          <VisibilitySection
+            transcriptId={data.id}
+            visibility={data.visibility}
+            isOwner={data.isOwner}
+            publicSharingEnabled={data.publicSharingEnabled}
+          />
           {/* Model */}
           <Tooltip>
             <TooltipTrigger asChild>
@@ -744,9 +749,10 @@ interface VisibilitySectionProps {
   transcriptId: string;
   visibility: string;
   isOwner: boolean;
+  publicSharingEnabled: boolean;
 }
 
-function VisibilitySection({ transcriptId, visibility, isOwner }: VisibilitySectionProps) {
+function VisibilitySection({ transcriptId, visibility, isOwner, publicSharingEnabled }: VisibilitySectionProps) {
   const router = useRouter();
   const [currentVisibility, setCurrentVisibility] = useState(visibility);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -806,12 +812,14 @@ function VisibilitySection({ transcriptId, visibility, isOwner }: VisibilitySect
                 <span>Team</span>
               </div>
             </SelectItem>
-            <SelectItem value="public">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Globe className="h-4 w-4" />
-                <span>Public</span>
-              </div>
-            </SelectItem>
+            {publicSharingEnabled ? (
+              <SelectItem value="public">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Globe className="h-4 w-4" />
+                  <span>Public</span>
+                </div>
+              </SelectItem>
+            ) : null}
           </SelectContent>
         </Select>
       ) : (

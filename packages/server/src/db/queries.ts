@@ -1,6 +1,7 @@
 import { and, count, desc, eq, exists, isNull, like, lt, or, sql } from "drizzle-orm";
 import type { DrizzleDB } from ".";
 import { repos, teamInvites, teamMembers, teams, transcripts, user, type UserRole } from "./schema";
+import { env } from "../lib/env";
 
 /**
  * Get repos from transcripts visible to the user.
@@ -514,7 +515,7 @@ export async function getInviteByCode(db: DrizzleDB, code: string) {
  * 3. Public transcripts from team members (viewer and owner share a team)
  */
 function buildVisibilityCondition(viewerId: string) {
-  return or(
+  const conditions = [
     // 1. Owner sees own transcripts
     eq(transcripts.userId, viewerId),
     // 2. Team transcripts where viewer AND owner are both in the shared team
@@ -533,17 +534,24 @@ function buildVisibilityCondition(viewerId: string) {
             AND owner_tm.user_id = ${transcripts.userId})`,
       ),
     ),
-    // 3. Public transcripts from team members (viewer and owner share a team)
-    and(
-      eq(transcripts.visibility, "public"),
-      exists(
-        sql`(SELECT 1 FROM ${teamMembers} AS viewer_tm
-            INNER JOIN ${teamMembers} AS owner_tm ON viewer_tm.team_id = owner_tm.team_id
-            WHERE viewer_tm.user_id = ${viewerId}
-            AND owner_tm.user_id = ${transcripts.userId})`,
+  ];
+
+  if (env.PUBLIC_SHARING_ENABLED) {
+    conditions.push(
+      // 3. Public transcripts from team members (viewer and owner share a team)
+      and(
+        eq(transcripts.visibility, "public"),
+        exists(
+          sql`(SELECT 1 FROM ${teamMembers} AS viewer_tm
+              INNER JOIN ${teamMembers} AS owner_tm ON viewer_tm.team_id = owner_tm.team_id
+              WHERE viewer_tm.user_id = ${viewerId}
+              AND owner_tm.user_id = ${transcripts.userId})`,
+        ),
       ),
-    ),
-  );
+    );
+  }
+
+  return or(...conditions);
 }
 
 /**
@@ -588,7 +596,14 @@ export async function getTranscriptWithAccess(db: DrizzleDB, viewerId: string, i
     .from(transcripts)
     .leftJoin(user, eq(transcripts.userId, user.id))
     .leftJoin(repos, eq(transcripts.repoId, repos.id))
-    .where(and(eq(transcripts.id, id), or(buildVisibilityCondition(viewerId), eq(transcripts.visibility, "public"))))
+    .where(
+      and(
+        eq(transcripts.id, id),
+        env.PUBLIC_SHARING_ENABLED
+          ? or(buildVisibilityCondition(viewerId), eq(transcripts.visibility, "public"))
+          : buildVisibilityCondition(viewerId),
+      ),
+    )
     .limit(1);
 
   return results[0] ?? null;
@@ -599,6 +614,10 @@ export async function getTranscriptWithAccess(db: DrizzleDB, viewerId: string, i
  * Does NOT require authentication - only returns transcripts with visibility="public".
  */
 export async function getPublicTranscript(db: DrizzleDB, id: string) {
+  if (!env.PUBLIC_SHARING_ENABLED) {
+    return null;
+  }
+
   const results = await db
     .select({
       id: transcripts.id,
@@ -720,17 +739,24 @@ export async function getDailyActivityCounts(db: DrizzleDB, viewerId: string, da
  * 2. Public transcripts from any team member
  */
 function buildTeamVisibleCondition(teamId: string) {
-  return or(
+  const conditions = [
     // Team-shared transcripts
     and(eq(transcripts.visibility, "team"), eq(transcripts.sharedWithTeamId, teamId)),
-    // Public transcripts from team members
-    and(
-      eq(transcripts.visibility, "public"),
-      exists(
-        sql`(SELECT 1 FROM ${teamMembers} WHERE ${teamMembers.teamId} = ${teamId} AND ${teamMembers.userId} = ${transcripts.userId})`,
+  ];
+
+  if (env.PUBLIC_SHARING_ENABLED) {
+    conditions.push(
+      // Public transcripts from team members
+      and(
+        eq(transcripts.visibility, "public"),
+        exists(
+          sql`(SELECT 1 FROM ${teamMembers} WHERE ${teamMembers.teamId} = ${teamId} AND ${teamMembers.userId} = ${transcripts.userId})`,
+        ),
       ),
-    ),
-  );
+    );
+  }
+
+  return or(...conditions);
 }
 
 /**
@@ -852,7 +878,7 @@ export async function getTeamMemberStats(db: DrizzleDB, teamId: string, days: nu
         eq(transcripts.userId, user.id),
         or(
           and(eq(transcripts.visibility, "team"), eq(transcripts.sharedWithTeamId, teamId)),
-          eq(transcripts.visibility, "public"),
+          ...(env.PUBLIC_SHARING_ENABLED ? [eq(transcripts.visibility, "public")] : []),
         ),
         sql`${transcripts.createdAt} >= ${startTimestamp}`,
       ),
@@ -875,7 +901,7 @@ export async function getTeamMemberStats(db: DrizzleDB, teamId: string, days: nu
         eq(teamMembers.teamId, teamId),
         or(
           and(eq(transcripts.visibility, "team"), eq(transcripts.sharedWithTeamId, teamId)),
-          eq(transcripts.visibility, "public"),
+          ...(env.PUBLIC_SHARING_ENABLED ? [eq(transcripts.visibility, "public")] : []),
         ),
         sql`${transcripts.createdAt} >= ${startTimestamp}`,
         sql`${transcripts.model} IS NOT NULL`,
@@ -898,7 +924,7 @@ export async function getTeamMemberStats(db: DrizzleDB, teamId: string, days: nu
         eq(teamMembers.teamId, teamId),
         or(
           and(eq(transcripts.visibility, "team"), eq(transcripts.sharedWithTeamId, teamId)),
-          eq(transcripts.visibility, "public"),
+          ...(env.PUBLIC_SHARING_ENABLED ? [eq(transcripts.visibility, "public")] : []),
         ),
         sql`${transcripts.createdAt} >= ${startTimestamp}`,
       ),
@@ -990,6 +1016,7 @@ export async function getTeamAgentUsage(db: DrizzleDB, teamId: string, days: num
  * OR if any team-shared transcript (with proper access) references it.
  */
 export async function canAccessBlob(db: DrizzleDB, viewerId: string, blobSha256: string) {
+  const publicClause = env.PUBLIC_SHARING_ENABLED ? "OR t.visibility = 'public'" : "";
   const result = db.$client
     .prepare(`
       SELECT 1
@@ -998,7 +1025,7 @@ export async function canAccessBlob(db: DrizzleDB, viewerId: string, blobSha256:
       WHERE tb.sha256 = ?
         AND (
           t.user_id = ?
-          OR t.visibility = 'public'
+          ${publicClause}
           OR (
             t.visibility = 'team'
             AND EXISTS (
@@ -1027,6 +1054,10 @@ export async function canAccessBlob(db: DrizzleDB, viewerId: string, blobSha256:
  * Used for unauthenticated access to blobs.
  */
 export async function canAccessPublicBlob(db: DrizzleDB, blobSha256: string) {
+  if (!env.PUBLIC_SHARING_ENABLED) {
+    return false;
+  }
+
   const result = db.$client
     .prepare(`
       SELECT 1
