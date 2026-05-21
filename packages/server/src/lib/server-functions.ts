@@ -194,6 +194,17 @@ export const getTranscript = createServerFn({ method: "GET" })
     }
 
     if (!transcript) {
+      if (!viewerId) {
+        const transcriptExists = await db.query.transcripts.findFirst({
+          where: eq(transcripts.id, id),
+          columns: { id: true },
+        });
+
+        if (transcriptExists) {
+          throw new Error("Login required");
+        }
+      }
+
       throw new Error("Transcript not found");
     }
 
