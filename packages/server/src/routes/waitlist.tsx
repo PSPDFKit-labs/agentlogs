@@ -1,13 +1,15 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Logo } from "../components/icons/source-icons";
+import { requireLoginEnabled } from "../lib/public-config";
+import { getWaitlistRouteRedirect } from "../lib/route-access";
 
 export const Route = createFileRoute("/waitlist")({
   beforeLoad: ({ context }) => {
-    const session = context.session;
-    if (session?.user.role === "user" || session?.user.role === "admin") {
-      throw redirect({ to: "/app" });
+    const routeRedirect = getWaitlistRouteRedirect(context.session, requireLoginEnabled);
+    if (routeRedirect) {
+      throw redirect(routeRedirect.kind === "href" ? { href: routeRedirect.value } : { to: routeRedirect.value });
     }
-    return { session };
+    return { session: context.session };
   },
   component: WaitlistPage,
 });

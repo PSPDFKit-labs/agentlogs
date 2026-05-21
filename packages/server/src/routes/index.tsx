@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import {
   ClaudeCodeIcon,
   ClineIcon,
@@ -10,9 +10,23 @@ import {
   PiIcon,
   XIcon,
 } from "../components/icons/source-icons";
+import { requireLoginEnabled } from "../lib/public-config";
+import { getRootRouteRedirect } from "../lib/route-access";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../components/ui/tooltip";
 
 export const Route = createFileRoute("/")({
+  beforeLoad: ({ context }) => {
+    if (!requireLoginEnabled) {
+      if (context.session) {
+        throw redirect({ to: "/app" });
+      }
+
+      return;
+    }
+
+    const routeRedirect = getRootRouteRedirect(context.session);
+    throw redirect(routeRedirect.kind === "href" ? { href: routeRedirect.value } : { to: routeRedirect.value });
+  },
   component: LandingPage,
 });
 

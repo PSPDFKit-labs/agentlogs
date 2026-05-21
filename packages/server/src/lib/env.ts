@@ -115,4 +115,5 @@ export const env = {
   WAITLIST_ENABLED: process.env.WAITLIST_ENABLED !== "false",
   AUTO_ADD_TEAM_ID: process.env.AUTO_ADD_TEAM_ID || "",
   PUBLIC_SHARING_ENABLED: process.env.PUBLIC_SHARING_ENABLED !== "false",
+  REQUIRE_LOGIN: process.env.REQUIRE_LOGIN === "true",
 };

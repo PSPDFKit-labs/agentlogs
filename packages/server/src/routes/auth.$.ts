@@ -1,8 +1,10 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { createAuth, getPrimaryAuthProvider } from "../lib/auth";
 
 // Server-side OAuth redirect route: /auth/github
 export const Route = createFileRoute("/auth/$")({
+  component: AuthRedirectFallback,
   server: {
     handlers: {
       GET: async ({ request, params }) => {
@@ -68,3 +70,11 @@ export const Route = createFileRoute("/auth/$")({
     },
   },
 });
+
+function AuthRedirectFallback() {
+  useEffect(() => {
+    window.location.replace(window.location.href);
+  }, []);
+
+  return null;
+}

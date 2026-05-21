@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useDebugMode } from "@/hooks/use-debug-mode";
-import { createFileRoute, Link, Outlet, redirect, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router";
 import {
   BookOpenIcon,
   ChevronDownIcon,
@@ -21,49 +21,33 @@ import {
 } from "lucide-react";
 import { DiscordIcon, Logo } from "@/components/icons/source-icons";
 import { authClient } from "../lib/auth-client";
+import { requireLoginEnabled } from "../lib/public-config";
+import { getProtectedAppRouteRedirect } from "../lib/route-access";
 import { clearSessionCache } from "../lib/session-cache";
 
 export const Route = createFileRoute("/_app")({
   beforeLoad: ({ location, context }) => {
-    // Use session from parent __root layout (already fetched)
-    const session = context.session;
-
-    // Allow unauthenticated access to public transcript pages and redirects
-    const isPublicTranscriptRoute = location.pathname.startsWith("/app/logs/") || location.pathname.startsWith("/s/");
-
-    if (!session) {
-      if (isPublicTranscriptRoute) {
-        // Allow access without session for public transcripts
-        return { session: null };
-      }
-
-      // Let the login dispatcher choose the configured provider.
-      if (location.pathname === "/app/device") {
-        const callbackURL = location.href; // Preserves ?user_code=...
-        throw redirect({ href: `/auth/login?callbackURL=${encodeURIComponent(callbackURL)}` });
-      }
-
-      throw redirect({ to: "/" });
+    const routeRedirect = getProtectedAppRouteRedirect(context.session, location.href, requireLoginEnabled);
+    if (routeRedirect) {
+      throw redirect(routeRedirect.kind === "href" ? { href: routeRedirect.value } : { to: routeRedirect.value });
     }
-    // Waitlist users can't access the app (except public transcripts)
-    if (session.user.role === "waitlist" && !isPublicTranscriptRoute) {
-      throw redirect({ to: "/waitlist" });
-    }
-    return { session };
+
+    return { session: context.session };
   },
   component: AppLayout,
 });
 
 function AppLayout() {
   const { session } = Route.useRouteContext();
-  const router = useRouter();
   const [debugMode, setDebugMode] = useDebugMode();
 
   const handleSignOut = async () => {
     clearSessionCache();
     await authClient.signOut({
       fetchOptions: {
-        onSuccess: () => router.invalidate(),
+        onSuccess: () => {
+          window.location.replace(requireLoginEnabled ? "/auth/login?callbackURL=%2Fapp" : "/");
+        },
       },
     });
   };
