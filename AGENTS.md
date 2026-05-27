@@ -17,6 +17,17 @@
 - `bun run test:e2e` — runs e2e tests for CLI package
 - `bun agentlogs` — run the CLI tool
 
+## Local Deployment
+
+- On this machine, AgentLogs is deployed as a systemd user service: `agentlogs.service`
+- Unit file: `~/.config/systemd/user/agentlogs.service`
+- Environment file: `~/.config/agentlogs/agentlogs.env`
+- Wrapper: `~/.local/bin/agentlogs-source-server`
+- The wrapper runs from `$HOME/agentlogs`, executes `bun run build`, then `bun run db:migrate`, then starts `packages/server/dist/agentlogs-server --no-migrations`
+- Manage it with `systemctl --user status|restart agentlogs.service`
+- Follow logs with `journalctl --user -u agentlogs.service -f`
+- There is also a companion summarization service: `llama-cpp.service`
+
 ## Code Style
 
 - TypeScript/ESM throughout; avoid default exports for shared modules
