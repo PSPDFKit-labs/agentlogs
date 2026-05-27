@@ -16,6 +16,24 @@ export default defineConfig({
   server: {
     port: 3000,
   },
+  preview: {
+    allowedHosts: (() => {
+      const webUrl = process.env.WEB_URL;
+      if (!webUrl) {
+        return undefined;
+      }
+
+      try {
+        const { hostname } = new URL(webUrl.includes("://") ? webUrl : `https://${webUrl}`);
+        if (!hostname || hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1") {
+          return undefined;
+        }
+        return [hostname];
+      } catch {
+        return undefined;
+      }
+    })(),
+  },
   optimizeDeps: {
     holdUntilCrawlEnd: true,
   },
