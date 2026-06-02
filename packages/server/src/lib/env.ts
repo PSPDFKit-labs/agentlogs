@@ -116,4 +116,8 @@ export const env = {
   AUTO_ADD_TEAM_ID: process.env.AUTO_ADD_TEAM_ID || "",
   PUBLIC_SHARING_ENABLED: process.env.PUBLIC_SHARING_ENABLED !== "false",
   REQUIRE_LOGIN: process.env.REQUIRE_LOGIN === "true",
+  SLACK_SIGNING_SECRET: process.env.SLACK_SIGNING_SECRET || "",
+  SLACK_APP_ID: process.env.SLACK_APP_ID || "",
+  SLACK_BOT_TOKEN: process.env.SLACK_BOT_TOKEN || "",
+  SLACK_AGENTLOGS_TEAM_ID: process.env.SLACK_AGENTLOGS_TEAM_ID || "",
 };

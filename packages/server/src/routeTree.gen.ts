@@ -18,6 +18,7 @@ import { Route as ApiTranscriptsRouteImport } from './routes/api/transcripts'
 import { Route as ApiIngestRouteImport } from './routes/api/ingest'
 import { Route as ApiCommitTrackRouteImport } from './routes/api/commit-track'
 import { Route as AppAppIndexRouteImport } from './routes/_app/app/index'
+import { Route as ApiSlackEventsRouteImport } from './routes/api/slack/events'
 import { Route as ApiOgIdRouteImport } from './routes/api/og.$id'
 import { Route as ApiBlobsSha256RouteImport } from './routes/api/blobs.$sha256'
 import { Route as ApiAuthTokenRouteImport } from './routes/api/auth.token'
@@ -74,6 +75,11 @@ const AppAppIndexRoute = AppAppIndexRouteImport.update({
   id: '/app/',
   path: '/app/',
   getParentRoute: () => AppRoute,
+} as any)
+const ApiSlackEventsRoute = ApiSlackEventsRouteImport.update({
+  id: '/api/slack/events',
+  path: '/api/slack/events',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiOgIdRoute = ApiOgIdRouteImport.update({
   id: '/api/og/$id',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/token': typeof ApiAuthTokenRoute
   '/api/blobs/$sha256': typeof ApiBlobsSha256Route
   '/api/og/$id': typeof ApiOgIdRoute
+  '/api/slack/events': typeof ApiSlackEventsRoute
   '/app/': typeof AppAppIndexRoute
   '/app/logs/$id': typeof AppAppLogsIdRoute
   '/app/private/$cwd': typeof AppAppPrivateCwdRoute
@@ -175,6 +182,7 @@ export interface FileRoutesByTo {
   '/api/auth/token': typeof ApiAuthTokenRoute
   '/api/blobs/$sha256': typeof ApiBlobsSha256Route
   '/api/og/$id': typeof ApiOgIdRoute
+  '/api/slack/events': typeof ApiSlackEventsRoute
   '/app': typeof AppAppIndexRoute
   '/app/logs/$id': typeof AppAppLogsIdRoute
   '/app/private/$cwd': typeof AppAppPrivateCwdRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/api/auth/token': typeof ApiAuthTokenRoute
   '/api/blobs/$sha256': typeof ApiBlobsSha256Route
   '/api/og/$id': typeof ApiOgIdRoute
+  '/api/slack/events': typeof ApiSlackEventsRoute
   '/_app/app/': typeof AppAppIndexRoute
   '/_app/app/logs/$id': typeof AppAppLogsIdRoute
   '/_app/app/private/$cwd': typeof AppAppPrivateCwdRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/api/auth/token'
     | '/api/blobs/$sha256'
     | '/api/og/$id'
+    | '/api/slack/events'
     | '/app/'
     | '/app/logs/$id'
     | '/app/private/$cwd'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/api/auth/token'
     | '/api/blobs/$sha256'
     | '/api/og/$id'
+    | '/api/slack/events'
     | '/app'
     | '/app/logs/$id'
     | '/app/private/$cwd'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/api/auth/token'
     | '/api/blobs/$sha256'
     | '/api/og/$id'
+    | '/api/slack/events'
     | '/_app/app/'
     | '/_app/app/logs/$id'
     | '/_app/app/private/$cwd'
@@ -288,6 +300,7 @@ export interface RootRouteChildren {
   ApiAuthTokenRoute: typeof ApiAuthTokenRoute
   ApiBlobsSha256Route: typeof ApiBlobsSha256Route
   ApiOgIdRoute: typeof ApiOgIdRoute
+  ApiSlackEventsRoute: typeof ApiSlackEventsRoute
   ApiAdminTranscriptUnifiedIdRoute: typeof ApiAdminTranscriptUnifiedIdRoute
 }
 
@@ -355,6 +368,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/app/'
       preLoaderRoute: typeof AppAppIndexRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/api/slack/events': {
+      id: '/api/slack/events'
+      path: '/api/slack/events'
+      fullPath: '/api/slack/events'
+      preLoaderRoute: typeof ApiSlackEventsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/og/$id': {
       id: '/api/og/$id'
@@ -480,6 +500,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthTokenRoute: ApiAuthTokenRoute,
   ApiBlobsSha256Route: ApiBlobsSha256Route,
   ApiOgIdRoute: ApiOgIdRoute,
+  ApiSlackEventsRoute: ApiSlackEventsRoute,
   ApiAdminTranscriptUnifiedIdRoute: ApiAdminTranscriptUnifiedIdRoute,
 }
 export const routeTree = rootRouteImport

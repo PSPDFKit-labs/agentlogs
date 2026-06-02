@@ -662,6 +662,54 @@ export async function getPublicTranscript(db: DrizzleDB, id: string) {
 }
 
 /**
+ * Get the minimal transcript metadata that Slack is allowed to unfurl.
+ * Does not read transcript body/content from object storage.
+ */
+export async function getTranscriptForSlackUnfurl(db: DrizzleDB, id: string, teamId: string) {
+  const visibilityConditions = [
+    and(
+      eq(transcripts.visibility, "team"),
+      eq(transcripts.sharedWithTeamId, teamId),
+      exists(
+        sql`(SELECT 1 FROM ${teamMembers}
+            WHERE ${teamMembers.teamId} = ${teamId}
+            AND ${teamMembers.userId} = ${transcripts.userId})`,
+      ),
+    ),
+  ];
+
+  if (env.PUBLIC_SHARING_ENABLED) {
+    visibilityConditions.push(eq(transcripts.visibility, "public"));
+  }
+
+  const results = await db
+    .select({
+      id: transcripts.id,
+      userId: transcripts.userId,
+      transcriptId: transcripts.transcriptId,
+      source: transcripts.source,
+      createdAt: transcripts.createdAt,
+      preview: transcripts.preview,
+      summary: transcripts.summary,
+      messageCount: transcripts.messageCount,
+      toolCount: transcripts.toolCount,
+      filesChanged: transcripts.filesChanged,
+      linesAdded: transcripts.linesAdded,
+      linesRemoved: transcripts.linesRemoved,
+      visibility: transcripts.visibility,
+      userName: user.name,
+      repoName: repos.repo,
+    })
+    .from(transcripts)
+    .leftJoin(user, eq(transcripts.userId, user.id))
+    .leftJoin(repos, eq(transcripts.repoId, repos.id))
+    .where(and(eq(transcripts.id, id), or(...visibilityConditions)))
+    .limit(1);
+
+  return results[0] ?? null;
+}
+
+/**
  * Get all transcripts visible to a user, sorted chronologically (newest first).
  * Includes: own transcripts, public transcripts, team-shared transcripts.
  */
