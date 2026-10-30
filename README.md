@@ -153,7 +153,7 @@ If `AI_BASE_URL` and `AI_MODEL` are set, AgentLogs prefers that endpoint and onl
 
 ### Local Development (From Source)
 
-Requires [Bun](https://bun.sh/) v1.3.10.
+Requires [Bun](https://bun.sh/) v1.4.4.
 
 ```bash
 git clone https://github.com/agentlogs/agentlogs.git
